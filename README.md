@@ -1,7 +1,7 @@
 # Hi, I'm Max Hartman
 ## I'm a Software Engineer & Researcher
 ### Education
-BS in Computer Engineering at The University of Illinois at Urbana-Champaign, 2022-2025
+BS in Computer Engineering at The University of Illinois at Urbana-Champaign, 2022-2025, Graduating with Honors
 
 PhD in ECE/CS at ...
 
@@ -22,11 +22,6 @@ Submitted Paper to EMNLP...More info soon
 
 ### Projects
 
+[Course Compass](https://github.com/cs411-alawini/sp24-cs411-team069-WetshellPengibbons): a Fullstack Web App built to help students at UIUC select courses
 
-### Coursework
-University of Illinois
-- Machine Learning (CS 446)
-- Intro to Robotics (ECE 470)
-- Database Systems (CS 411)
-- Computer Systems Engineering (ECE 391)
-- Data Structures & Algorithms (CS 225)
+
