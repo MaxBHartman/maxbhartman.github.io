@@ -11,9 +11,11 @@ Founding Engineer at Electrokare, 2023-Present
 - Developed & Integrated Electrokare’s Data Pipeline with Azure, developing API endpoints to connect internal tools.
 - Engineered a scalable cloud infrastructure on Azure to facilitate efficient AI model training, reduced costs by 60%.
 - Crafted an ECG feature extraction library to identify signal features.
+  
 Machine Learning Engineer Intern at Honeywell, Summer 2024
 - Developing an app to modernize piping and instrumentation diagrams (P&IDs) on the Honeywell Experion platform.
 - Integrating Generative AI features in alignment with Honeywell’s long-term AI strategy.
+
 Machine Learning Engineer Intern at Genuine Parts Company, Summer 2023
 - Revitalized GPC’s online search with a Dynamic Facet Ranking system, boosting sales by 30% in production.
 - Developed Deep Learning Networks using LSTMs, GRUs, and CNNs in Tensorflow.
