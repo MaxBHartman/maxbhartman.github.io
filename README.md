@@ -1,5 +1,4 @@
-# Hi, I'm Max Hartman
-## I'm a Software Engineer & Researcher
+# I'm a Software Engineer & Researcher
 ### Education
 BS in Computer Engineering at The University of Illinois at Urbana-Champaign, 2022-2025, Graduating with Honors
 
@@ -21,6 +20,8 @@ Bretl Research Group (Advisor: Tim Bretl), 2022-2024
 Submitted Paper to EMNLP...More info soon
 
 ### Projects
+
+[LinuxOS](): a Linux-Based Operating System built from scratch
 
 [Course Compass](https://github.com/cs411-alawini/sp24-cs411-team069-WetshellPengibbons): a Fullstack Web App built to help students at UIUC select courses
 
