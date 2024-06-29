@@ -2,6 +2,7 @@
 ## I'm a Software Engineer & Researcher
 ### Education
 BS in Computer Engineering at The University of Illinois at Urbana-Champaign, 2022-2025
+
 PhD in ECE/CS at ...
 
 ### Industry Experience
@@ -31,4 +32,11 @@ Submitted Paper to EMNLP...More info soon
 
 ### Projects
 
+
 ### Coursework
+University of Illinois
+- Machine Learning (CS 446)
+- Intro to Robotics (ECE 470)
+- Database Systems (CS 411)
+- Computer Systems Engineering (ECE 391)
+- Data Structures & Algorithms (CS 225)
