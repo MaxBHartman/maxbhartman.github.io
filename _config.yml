@@ -1,4 +1,7 @@
-round-avatar: true
+social_media:
+  github: MaxBHartman
+  linkedin: hartmanmax
 title: Hi, I'm Max Hartman
 logo: 1699229207438.jpg
 theme: jekyll-theme-minimal
+
