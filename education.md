@@ -1,5 +1,7 @@
+---
 layout: page
-title: New Page
-permalink: /education/
+title: Education
+permalink: /education
+---
 
 # Education
