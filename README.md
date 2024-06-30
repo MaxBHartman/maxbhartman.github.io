@@ -1,12 +1,6 @@
 ## I'm a Software Engineer & Researcher
 
-### Education
-- **BS in Computer Engineering**
-  - *The University of Illinois at Urbana-Champaign, 2022-2025*
-  - Graduating with Honors
-
-- **PhD in ECE/CS**
-  - *To be completed at [University Name], [Year] - [Year]*
+### [Education](https://maxbhartman.github.io/education)
 
 ### Industry Experience
 - **Founding Engineer** at [Electrokare](https://electrokare.com), *2023-Present*
