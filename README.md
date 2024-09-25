@@ -3,7 +3,7 @@
 ### [Education](https://maxbhartman.github.io/education)
 
 ### Industry Experience
-- **Founding Engineer** at [Electrokare](https://electrokare.com), *2023-Present*
+- **Founding Engineer** at [Electrokare](https://electrokare.com), *October 2023-July 2024*
 
 - **Machine Learning Engineer Intern** at Honeywell, *Summer 2024*
 
@@ -15,7 +15,8 @@
 - **Bretl Research Group**, *Advisor: Tim Bretl, 2022-2024*
 
 ### Publications
-- *Submitted Paper to EMNLP... More info soon*
+- Xinbo Wu, **Max Hartman**, Vidhata Jayaraman, and Lav R. Varshney, ”SwitchCIT: Switching for Continual
+Instruction Tuning of Large Language Models”, 2024. [Preprint](https://arxiv.org/abs/2407.11780)
 
 ### Projects
 - **[LinuxOS]()**
