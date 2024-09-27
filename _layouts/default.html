@@ -1,5 +1,3 @@
-<!-- _layouts/default.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,10 +15,19 @@
     <aside class="sidebar">
       <img src="{{ site.logo }}" alt="Max Hartman" class="profile-pic">
       <p class="contact-info">
-        Email: maxbartman(at)gmail(dot)com</a><br>
-        <a href="https://github.com/{{ site.social_media.github }}">{{GitHub}}</a><br>
-         <a href="https://linkedin.com/in/{{ site.social_media.linkedin }}">{{ Linkedin }}</a><br>
+        Email: maxbartman(at)gmail(dot)com<br>
+        
+        <!-- GitHub Logo with Link -->
+        <a href="https://github.com/{{ site.social_media.github }}" target="_blank">
+          <img src="{{ '/images/github.png' | relative_url }}" alt="GitHub" class="social-icon">
+        </a>
+
+        <!-- LinkedIn Logo with Link -->
+        <a href="https://linkedin.com/in/{{ site.social_media.linkedin }}" target="_blank">
+          <img src="{{ '/images/linkedin.png' | relative_url }}" alt="LinkedIn" class="social-icon">
+        </a>
       </p>
+
       <p class="news">
         <strong>News</strong><br>
         2024-08-27: Launched new project on Protein-Protein Interaction Predictions.

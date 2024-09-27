@@ -110,3 +110,15 @@ footer {
     margin-bottom: 20px;
   }
 }
+
+/* Style for social icons */
+.social-icon {
+  width: 30px; /* Adjust size to your preference */
+  height: auto;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.social-icon:hover {
+  opacity: 0.8; /* Add a hover effect for better interactivity */
+}
