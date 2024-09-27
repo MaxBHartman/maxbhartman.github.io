@@ -9,7 +9,6 @@ I'm a software engineer and machine learning researcher focused on building scal
 
 ## Explore My Work
 - [Research](research.md)  
-  <!-- Read more about my research in Machine Learning, Representation Learning, and Language Models. -->
 
 - [Industry Experience](experience.md)
 
