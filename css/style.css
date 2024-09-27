@@ -113,11 +113,12 @@ footer {
 
 /* Style for social icons */
 .social-icon {
-  width: 30px; /* Adjust size to your preference */
+  width: 16px; /* Smaller size, adjust as necessary */
   height: auto;
-  margin-right: 10px;
-  vertical-align: middle;
+  margin-right: 5px; /* Less space between icon and text */
+  vertical-align: middle; /* Align the icon vertically with the text */
 }
+
 .social-icon:hover {
-  opacity: 0.8; /* Add a hover effect for better interactivity */
+  opacity: 0.8; /* Hover effect for interactivity */
 }
