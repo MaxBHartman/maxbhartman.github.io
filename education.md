@@ -8,9 +8,7 @@ permalink: /education
 
 ## University of Illinois at Urbana-Champaign (2022 - 2025)
 
-**Bachelor of Science in Electrical and Computer Engineering**
-
-**Minor in Mathematics**
+**Bachelor of Science in Electrical and Computer Engineering, Minor in Mathematics**
 
 **GPA:** 3.9/4.0
 
