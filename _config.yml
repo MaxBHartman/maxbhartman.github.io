@@ -1,7 +1,11 @@
+title: "Hi, I'm Max Hartman"
+theme: jekyll-theme-minimal
+logo: "/images/1699229207438.jpg"
+
 social_media:
   github: MaxBHartman
   linkedin: hartmanmax
-title: Hi, I'm Max Hartman
-logo: 1699229207438.jpg
-theme: jekyll-theme-minimal
 
+# Other settings
+baseurl: ""
+url: "https://maxbhartman.github.io"
