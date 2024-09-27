@@ -1,3 +1,5 @@
+<!-- _layouts/default.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,35 +10,30 @@
 </head>
 <body>
 
-  <!-- Header with logo and title -->
-  <header>
-    <img src="{{ site.logo }}" alt="Logo">
-    <h1>{{ site.title }}</h1>
-  </header>
+  <!-- Main Wrapper -->
+  <div class="container">
+    
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <img src="{{ site.logo }}" alt="Max Hartman" class="profile-pic">
+      <p class="contact-info">
+        Contact: <a href="mailto:max@example.com">max@example.com</a><br>
+        GitHub: <a href="https://github.com/{{ site.social_media.github }}">{{ site.social_media.github }}</a><br>
+        LinkedIn: <a href="https://linkedin.com/in/{{ site.social_media.linkedin }}">{{ site.social_media.linkedin }}</a><br>
+        <a href="#">CV</a> | <a href="#">Transcript</a>
+      </p>
+      <p class="news">
+        <strong>News</strong><br>
+        2024-09-27: Launched new project on Protein-Protein Interaction Predictions.
+      </p>
+    </aside>
 
-  <!-- Navigation Links -->
-  <nav>
-    <ul>
-      <li><a href="{{ '/' | relative_url }}">Home</a></li>
-      <li><a href="{{ '/about' | relative_url }}">About</a></li>
-      <li><a href="{{ '/projects' | relative_url }}">Projects</a></li>
-      <li><a href="{{ '/publications' | relative_url }}">Publications</a></li>
-    </ul>
-  </nav>
+    <!-- Main Content Area -->
+    <main class="content">
+      {{ content }}
+    </main>
 
-  <!-- Main Content -->
-  <main>
-    {{ content }}
-  </main>
-
-  <!-- Footer with Social Media Links -->
-  <footer>
-    <p>&copy; {{ site.time | date: '%Y' }} Max Hartman</p>
-    <ul>
-      <li><a href="https://github.com/{{ site.social_media.github }}">GitHub</a></li>
-      <li><a href="https://linkedin.com/in/{{ site.social_media.linkedin }}">LinkedIn</a></li>
-    </ul>
-  </footer>
+  </div>
 
 </body>
 </html>
