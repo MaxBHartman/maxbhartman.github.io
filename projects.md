@@ -1,11 +1,12 @@
 ---
 layout: default
 title: Projects
+permalink: /projects
 ---
 
 # My Projects
 
-Here are some of the projects I've worked on:
+Here are some of the projects I've recently worked on:
 
 ## [LinuxOS](#)
 - A Linux-Based Operating System built from scratch.
