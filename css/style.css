@@ -5,6 +5,7 @@ body {
   color: #333;
   margin: 0;
   padding: 0;
+  line-height: 1.6;
 }
 
 .container {
@@ -21,18 +22,26 @@ body {
   padding: 20px;
   margin-right: 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .profile-pic {
-  width: 80px; /* Smaller logo */
+  max-width: 100px; /* Max width of 100px for the profile picture */
+  max-height: 100px; /* Max height of 100px */
+  width: 100%; /* Ensures the image scales properly */
   height: auto; /* Maintain aspect ratio */
   border-radius: 50%; /* Circular shape */
+  object-fit: cover; /* Ensure the image fits within the defined size */
   margin-bottom: 15px;
 }
 
 .contact-info {
   font-size: 0.9rem;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .contact-info a {
@@ -40,9 +49,14 @@ body {
   text-decoration: none;
 }
 
+.contact-info a:hover {
+  text-decoration: underline;
+}
+
 .news {
   font-size: 0.85rem;
   color: #555;
+  margin-top: 15px;
 }
 
 /* Main Content Styling */
@@ -59,7 +73,7 @@ body {
 
 .content p {
   font-size: 1rem;
-  line-height: 1.6;
+  line-height: 1.8; /* Slightly increased for better readability */
 }
 
 .content a {
@@ -69,6 +83,16 @@ body {
 
 .content a:hover {
   text-decoration: underline;
+}
+
+/* Footer Styling */
+footer {
+  text-align: center;
+  padding: 10px;
+  background-color: #f0f0f0;
+  color: #333;
+  font-size: 0.85rem;
+  margin-top: 40px;
 }
 
 /* Responsive Design */
