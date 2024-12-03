@@ -1,49 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ page.title | default: site.title }}</title>
-  <link rel="stylesheet" href="{{ '/css/style.css' | relative_url }}">
-</head>
-<body>
+---
+layout: compress
+---
 
-  <!-- Main Wrapper -->
-  <div class="container">
-    
-    <!-- Left Sidebar -->
-    <aside class="sidebar">
-      <img src="{{ site.logo }}" alt="Max Hartman" class="profile-pic">
-      <p class="contact-info">
-        Email: maxbartman(at)gmail(dot)com<br>
-        
-        <!-- GitHub Logo with Link -->
-      <a href="https://github.com/{{ site.social_media.github }}" target="_blank">
-        <img src="{{ '/images/github.png' | relative_url }}" alt="GitHub" class="social-icon">
-      </a>
+{% include base_path %}
 
-      <!-- LinkedIn Logo with Link -->
-      <a href="https://linkedin.com/in/{{ site.social_media.linkedin }}" target="_blank">
-        <img src="{{ '/images/linkedin.png' | relative_url }}" alt="LinkedIn" class="social-icon">
-      </a>
+<!doctype html>
+<html lang="{{ site.locale | slice: 0,2 }}" class="no-js">
+  <head>
+    {% include head.html %}
+    {% include head/custom.html %}
+  </head>
 
-      <a href="https://scholar.google.com/citations?user=WXncIGMAAAAJ&hl=en" target="_blank">
-        <img src="{{ '/images/google-scholar.png' | relative_url }}" alt="Google Scholar" class="social-icon">
-      </a>
+  <body>
 
+    {% include browser-upgrade.html %}
+    {% include masthead.html %}
 
-      <p class="news">
-        <strong>News</strong><br>
-        2024-08-27: Launched new project on Protein-Protein Interaction Predictions.
-      </p>
-    </aside>
+    {{ content }}
 
-    <!-- Main Content Area -->
-    <main class="content">
-      {{ content }}
-    </main>
+    <div class="page__footer">
+      <footer>
+        {% include footer/custom.html %}
+        {% include footer.html %}
+      </footer>
+    </div>
 
-  </div>
+    {% include scripts.html %}
 
-</body>
+  </body>
 </html>
