@@ -11,23 +11,19 @@ redirect_from:
 
 Education
 ======
-* Ph.D in Version Control Theory, GitHub University, 2018 (expected)
-* M.S. in Jekyll, GitHub University, 2014
-* B.S. in GitHub, GitHub University, 2012
+* B.S. in Computer Engineering, University of Illinois, 2026 
 
 Work experience
 ======
-* Spring 2024: Academic Pages Collaborator
-  * Github University
-  * Duties includes: Updates and improvements to template
-  * Supervisor: The Users
+* Founding Software Engineer & Technical Lead, 10/23 - 07/24
+  * Electrokare
+  * Machine Learning and Data Instructure
 
-* Fall 2015: Research Assistant
-  * Github University
-  * Duties included: Merging pull requests
-  * Supervisor: Professor Hub
+* Artificial Intelligence & Machine Learning Intern, 05/24 - 08/24
+  * Honeywell
+  * AI for Process Engineering
 
-* Summer 2015: Research Assistant
+* Software Engineeringn
   * Github University
   * Duties included: Tagging issues
   * Supervisor: Professor Git
