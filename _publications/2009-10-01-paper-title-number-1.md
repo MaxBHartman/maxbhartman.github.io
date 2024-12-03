@@ -4,7 +4,7 @@ collection: publications
 category: manuscripts
 permalink: /publication/2009-10-01-paper-title-number-1
 excerpt: 'Switch Network to help alleviate catastrophic forgetting in continual learning.'
-# date: '2024-07-16'
+date: 2024-7-16
 # venue: 'Journal 1'
 # slidesurl: 'http://academicpages.github.io/files/slides1.pdf'
 paperurl: 'https://arxiv.org/abs/2407.11780'
