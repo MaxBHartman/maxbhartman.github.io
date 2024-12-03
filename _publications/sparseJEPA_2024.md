@@ -7,7 +7,7 @@ excerpt: 'Current Project. Integrating Sparsity into JEPA.'
 date: 2025-1-01
 # venue: 'Journal 1'
 # slidesurl: 'http://academicpages.github.io/files/slides1.pdf'
-paperurl: 'https://arxiv.org/abs/2407.11780'
+# paperurl: 'https://arxiv.org/abs/2407.11780'
 citation: 'Max Hartman, Lav R. Varshney, "SparseJEPA: Sparse Representation Learning of Joint Embedding Predictive Architectures", 2025.'
 ---
 
