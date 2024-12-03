@@ -6,55 +6,7 @@ author_profile: true
 redirect_from:
   - /resume
 ---
-
-{% include base_path %}
-
-Education
-======
-* B.S. in Computer Engineering, University of Illinois, 2026 
-
-Work experience
-======
-* Founding Software Engineer & Technical Lead, 10/23 - 07/24
-  * Electrokare
-  * Machine Learning and Data Instructure
-
-* Artificial Intelligence & Machine Learning Intern, 05/24 - 08/24
-  * Honeywell
-  * AI for Process Engineering
-
-* Software Engineeringn
-  * Github University
-  * Duties included: Tagging issues
-  * Supervisor: Professor Git
-  
-Skills
-======
-* Skill 1
-* Skill 2
-  * Sub-skill 2.1
-  * Sub-skill 2.2
-  * Sub-skill 2.3
-* Skill 3
-
-Publications
-======
-  <ul>{% for post in site.publications reversed %}
-    {% include archive-single-cv.html %}
-  {% endfor %}</ul>
-  
-Talks
-======
-  <ul>{% for post in site.talks reversed %}
-    {% include archive-single-talk-cv.html  %}
-  {% endfor %}</ul>
-  
-Teaching
-======
-  <ul>{% for post in site.teaching reversed %}
-    {% include archive-single-cv.html %}
-  {% endfor %}</ul>
-  
-Service and leadership
-======
-* Currently signed in to 43 different slack teams
+<iframe src="/files/cv.pdf" width="100%" height="800px" style="border: none;">
+    This browser does not support PDFs. Please download the PDF to view it:
+    <a href="/files/cv.pdf">Download CV</a>.
+</iframe>
