@@ -8,30 +8,28 @@ redirect_from:
 ---
 About Me
 =====
-I'm Max Hartman, an undergraduate at the University of Illinois studying Computer Engineering with a mathematics minor. I'm very excited to work at the intersection of research and industry.
+I'm Max Hartman, an incoming Master of Science in Electrical & Computer Engineering at the University of Illinois. I completed my BS in Computer Engineering with a minor in Mathematics in May 2025. 
 
 Research Interests
 =====
-As AI systems advance, the question of how to build general agents that can perceive the world, plan complex actions, and autonomously continue learning becomes increasingly urgent. My research is driven by the ambition to develop AI systems capable of world understanding and complex action planning, bridging the gap between perception and action. To this end, my current research interests mainly lie in Generative Models, Emergent Capabilities, Representation Learning, and Robotics, specifically in using an information-theoretic perspective to understand capabilities of Language Models, building new representation and learning paradigms to improve world understanding, and bridging the gap between perception and autonomous decision-making for robotics. Additionally, from my startup experience with Electrokare, I have a soft spot for AI Applications in Biotechnology and Healthcare.
+As AI systems continue to scale larger and larger, the need for authentic, high-quality data is becoming ever more important. With concerns around privacy, much of the world's data in unused. My research is driven by two main goals: how can we interpret existing foundational models and how can we build systems to safely use the abundance of personal data while maintaining privacy and security? To this end, my current interests mainly lie in Generative Models, Interpretability, AI Safety, Representation Learning, and Federated Learning.
 
 Broadly my interests fall into the following:
 - Machine Learning & AI
+- Federated Learning
 - Representation Learning
 - Information Theory
 - Robotics
 
-Academic Coursework
+Academic History
 =====
 Over my undergraduate career, I've taken coursework spanning many fields:
 * Machine Learning (CS 446)
 * Nonlinear Programming (MATH 484)
 * Robotics (ECE 470)
-* Quantum Information Theory (ECE 498EC)
-* Database Systems (CS 411)
-* Algorithms & Models of Computation (ECE 374)
-
-Next Semester, I will be taking:
 * Random Processes (ECE 534)
 * Control Systems (ECE 486)
 * Abstract Algebra (MATH 417)
-* Neural Interface Engineering (ECE 421)
+* Algorithms & Models of Computation (ECE 374)
+* Quantum Information Theory (ECE 498EC)
+* Database Systems (CS 411)

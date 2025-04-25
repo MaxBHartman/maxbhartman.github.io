@@ -5,6 +5,7 @@ permalink: /experience
 ---
 
 # Industry Experience
+- 
 
 - Founding Engineer at Electrokare (October 2023 - July 2024)
 Deep Learning with Electrocardiogram (EKG) Signals for Electrolyte-Level Detection
