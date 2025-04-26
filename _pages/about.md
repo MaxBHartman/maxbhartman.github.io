@@ -12,7 +12,7 @@ I'm Max Hartman, an incoming Master of Science in Electrical & Computer Engineer
 
 Research Interests
 =====
-As AI systems continue to scale larger and larger, the need for authentic, high-quality data is becoming ever more important. With concerns around privacy, much of the world's data in unused. My research is driven by two main goals: how can we interpret existing foundational models and how can we build systems to safely use the abundance of personal data while maintaining privacy and security? To this end, my current interests mainly lie in Generative Models, Interpretability, AI Safety, Representation Learning, and Federated Learning.
+As AI systems continue to scale larger and larger, the need for authentic, high-quality data is becoming ever more important. With concerns around privacy, much of the world's data is unused. My research is driven by two main goals: how can we interpret existing foundational models and how can we build systems to safely use the abundance of personal data while maintaining privacy and security. To this end, my current interests mainly lie in Generative Models, Interpretability, AI Safety, Representation Learning, and Federated Learning.
 
 Broadly my interests fall into the following:
 - Machine Learning & AI
