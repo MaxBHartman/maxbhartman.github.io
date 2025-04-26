@@ -8,7 +8,7 @@ redirect_from:
 ---
 About Me
 =====
-I'm Max Hartman, an incoming Master of Science in Electrical & Computer Engineering at the University of Illinois. I completed my BS in Computer Engineering with a minor in Mathematics in May 2025. 
+I'm Max Hartman, an incoming Master of Science in Electrical & Computer Engineering at UIUC. I completed my BS at UIUC in Computer Engineering with a minor in Mathematics in May 2025 at. 
 
 Research Interests
 =====
