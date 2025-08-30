@@ -24,10 +24,10 @@ latest_posts:
   scrollable: true # adds a vertical scroll bar if there are more than 3 new posts items
   limit: 3 # leave blank to include all the blog posts
 ---
-Hi, I'm Max Hartman, an MS student at the [UIUC ECE](https://ece.illinois.edu/) department, where I am fortunate to be advised by [Prof. Minh N. Do](https://minhdo.ece.illinois.edu/). Previously, I completed my BS at UIUC in Computer Engineering, advised by [Prof. Lav R. Varshney](https://www.varshney.csl.illinois.edu/). 
 
-My research is focused in AI Safety, Interpretability, and Information Theory. My main goals are to invent techniques to better understand *how* and *why* models make decisions, and build Federated systems so AI techniques can be safetly applied to fields with sensitive data (e.g. Healthcare) or in industries where competitors cannot share raw data but can mutually benefit from a shared global model (e.g. manufacturing).
+Hi, I'm Max Hartman, an MS student at the [UIUC ECE](https://ece.illinois.edu/) department, where I am fortunate to be advised by [Prof. Minh N. Do](https://minhdo.ece.illinois.edu/). Previously, I completed my BS at UIUC in Computer Engineering, advised by [Prof. Lav R. Varshney](https://www.varshney.csl.illinois.edu/).
 
+My research is focused in AI Safety, Interpretability, and Information Theory. My main goals are to invent techniques to better understand _how_ and _why_ models make decisions, and build Federated systems so AI techniques can be safetly applied to fields with sensitive data (e.g. Healthcare) or in industries where competitors cannot share raw data but can mutually benefit from a shared global model (e.g. manufacturing).
 
 <!-- Put your address / P.O. box / other info right below your picture. You can also disable any of these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
 
