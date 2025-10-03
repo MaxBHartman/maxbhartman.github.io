@@ -27,8 +27,6 @@ latest_posts:
 
 Hi, I'm Max Hartman, an MS student at the [UIUC ECE](https://ece.illinois.edu/) department, where I am fortunate to be advised by [Prof. Minh N. Do](https://minhdo.ece.illinois.edu/). Previously, I completed my BS at UIUC in Computer Engineering, advised by [Prof. Lav R. Varshney](https://www.varshney.csl.illinois.edu/).
 
-My research is focused in AI Safety, Interpretability, and Information Theory. My main goals are to invent techniques to better understand _how_ and _why_ models make decisions, and build Federated systems so AI techniques can be safetly applied to fields with sensitive data (e.g. Healthcare) or in industries where competitors cannot share raw data but can mutually benefit from a shared global model (e.g. manufacturing).
+My research is centered around how information is stored and processed in large models (currently focused on VLMs). I am particularly interested in what in how information across modalities is used. I enjoy theoretically explaining why certain mechanisms occur in models and using such insights to improve model performance, reasoning, and efficiency with archtectural and inference-time modifications.
 
-<!-- Put your address / P.O. box / other info right below your picture. You can also disable any of these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
-
-Link to your social media connections, too. This theme is set up to use [Font Awesome icons](https://fontawesome.com/) and [Academicons](https://jpswalsh.github.io/academicons/), like the ones below. Add your Facebook, Twitter, LinkedIn, Google Scholar, or just disable all of them. -->
+Additionally, I have been working on building Federated systems so AI techniques can be safetly applied to fields with sensitive data (e.g. Healthcare) or in industries where competitors cannot share raw data but can mutually benefit from a shared global model (e.g. manufacturing).
