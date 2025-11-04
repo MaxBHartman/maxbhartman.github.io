@@ -25,7 +25,7 @@ latest_posts:
   limit: 3 # leave blank to include all the blog posts
 ---
 
-Hi, I'm Max Hartman, an MS student at the [UIUC ECE](https://ece.illinois.edu/) department, where I am fortunate to be advised by [Prof. Minh N. Do](https://minhdo.ece.illinois.edu/). Previously, I completed my BS at UIUC in Computer Engineering, advised by [Prof. Lav R. Varshney](https://www.varshney.csl.illinois.edu/).
+Hi, I'm Max Hartman, an MS student at the [UIUC ECE](https://ece.illinois.edu/) department, where I am fortunate to be advised by [Prof. Minh N. Do](https://minhdo.ece.illinois.edu/). Previously, I completed my BS at UIUC in Computer Engineering, advised by [Prof. Lav R. Varshney](https://www.varshney.csl.illinois.edu/). In Summer 2026, I will be a software engineer intern at Meta. Previously, I was a software development engineer intern at Amazon (Summer 2025).
 
 My research is centered around how information is stored and processed in large models (currently focused on VLMs). I am particularly interested in what in how information across modalities is used. I enjoy theoretically explaining why certain mechanisms occur in models and using such insights to improve model performance, reasoning, and efficiency with archtectural and inference-time modifications.
 
