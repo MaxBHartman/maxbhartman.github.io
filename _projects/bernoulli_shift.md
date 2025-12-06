@@ -8,18 +8,24 @@ category: work
 
 ## Overview
 
-This interactive visualization demonstrates the Bernoulli shift map. The map is defined by $$x_{t+1} = 2x_t \pmod 1,$$ which is equivalent to shifting the binary representation of a number one position to the right. This visualization shows how tiny perturbations in initial conditions lead to exponential divergence over time.
+This was a small project to visualize a simple dynamical system. This interactive visualization demonstrates the Bernoulli shift map. The map is defined by $$x_{t+1} = 2x_t \pmod 1,$$ which is equivalent to shifting the binary representation of a number one position to the right. This visualization shows how tiny perturbations in initial conditions lead to exponential divergence over time.
 
 ## Interactive Demo
 
 <div class="viz-container">
 <div class="controls">
+<div class="control-group">
 <label>x₀: <span id="disp_x0">0.123</span></label>
 <input type="range" id="inp_x0" min="0" max="1" step="0.001" value="0.123">
 </div>
 <div class="control-group">
+<label>Steps: <span id="disp_steps">50</span></label>
+<input type="range" id="inp_steps" min="10" max="1000" step="10" value="50">
+</div>
+<div class="control-group">
 <label>Perturbation (ε): <span id="disp_eps">0.0010</span></label>
 <input type="range" id="inp_eps" min="0" max="0.01" step="0.0001" value="0.001">
+</div>
 <button id="playBtn">▶ Play</button>
 <span id="timeDisplay">t = 0</span>
 </div>
@@ -46,13 +52,19 @@ gap: 15px;
 margin-bottom: 20px;
 flex-wrap: wrap;
 }
+.control-group {
+display: flex;
+flex-direction: column;
+gap: 5px;
+flex: 1;
+min-width: 150px;
+}
 .controls label {
 font-weight: 600;
 white-space: nowrap;
 }
 .controls input[type="range"] {
-flex: 1;
-min-width: 150px;
+width: 100%;
 }
 .controls button {
 padding: 8px 20px;
@@ -100,10 +112,10 @@ let chartTraj, chartErr;
 // Store current values as variables
 let currentX0 = 0.123;
 let currentEps = 0.001;
+let maxSteps = 50;
 let isPlaying = false;
 let animationFrameId = null;
 let currentStep = 0;
-const maxSteps = 50;
 let simulationData = null;
 
 function runSimulation(x0, eps, steps=50) {
@@ -185,19 +197,23 @@ function updateAll() {
 // Get current slider values and update stored variables
 const x0Input = document.getElementById('inp_x0');
 const epsInput = document.getElementById('inp_eps');
-if (!x0Input || !epsInput) return;
+const stepsInput = document.getElementById('inp_steps');
+if (!x0Input || !epsInput || !stepsInput) return;
 
 currentX0 = parseFloat(x0Input.value);
 currentEps = parseFloat(epsInput.value);
+maxSteps = parseInt(stepsInput.value);
 
 // Update display values in real-time
 const dispX0El = document.getElementById('disp_x0');
 const dispEpsEl = document.getElementById('disp_eps');
+const dispStepsEl = document.getElementById('disp_steps');
 if (dispX0El) dispX0El.textContent = currentX0.toFixed(3);
 if (dispEpsEl) dispEpsEl.textContent = currentEps.toFixed(4);
+if (dispStepsEl) dispStepsEl.textContent = maxSteps;
 
 // Run simulation with current variable values
-simulationData = runSimulation(currentX0, currentEps);
+simulationData = runSimulation(currentX0, currentEps, maxSteps);
 currentStep = 0;
 
 // Update charts to show full simulation
@@ -257,9 +273,10 @@ startAnimation();
 // Attach event listeners to sliders
 const inpX0 = document.getElementById('inp_x0');
 const inpEps = document.getElementById('inp_eps');
-const stepSlider = document.getElementById('step_slider');
+const inpSteps = document.getElementById('inp_steps');
 const dispX0 = document.getElementById('disp_x0');
 const dispEps = document.getElementById('disp_eps');
+const dispSteps = document.getElementById('disp_steps');
 
 if (inpX0 && dispX0) {
 inpX0.addEventListener('input', function() {
@@ -269,6 +286,19 @@ stopAnimation();
 currentX0 = parseFloat(this.value);
 // Update display
 dispX0.textContent = currentX0.toFixed(3);
+// Update plots with new variable value
+updateAll();
+});
+}
+
+if (inpSteps && dispSteps) {
+inpSteps.addEventListener('input', function() {
+// Stop any ongoing animation
+stopAnimation();
+// Update the variable immediately
+maxSteps = parseInt(this.value);
+// Update display
+dispSteps.textContent = maxSteps;
 // Update plots with new variable value
 updateAll();
 });
@@ -296,8 +326,10 @@ playBtn.addEventListener('click', toggleAnimation);
 // Initialize variables from sliders on page load
 const initX0 = document.getElementById('inp_x0');
 const initEps = document.getElementById('inp_eps');
+const initSteps = document.getElementById('inp_steps');
 if (initX0) currentX0 = parseFloat(initX0.value);
 if (initEps) currentEps = parseFloat(initEps.value);
+if (initSteps) maxSteps = parseInt(initSteps.value);
 
 // Initialize on page load
 updateAll();
