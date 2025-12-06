@@ -56,7 +56,12 @@ ninja.data = [{
           section: "News",},{id: "news-my-paper-unmasking-the-functionality-of-early-layers-in-vlms-was-accepted-to-the-excv-workshop-at-iccv-2025",
           title: 'My paper, Unmasking the functionality of early layers in VLMs, was accepted to...',
           description: "",
-          section: "News",},{
+          section: "News",},{id: "projects-bernoulli-shift-map-visualization",
+          title: 'Bernoulli Shift Map Visualization',
+          description: "Interactive visualization of the Bernoulli shift map demonstrating chaotic dynamics and sensitive dependence on initial conditions.",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/bernoulli_shift/";
+            },},{
         id: 'social-email',
         title: 'email',
         section: 'Socials',
