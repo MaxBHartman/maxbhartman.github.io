@@ -15,7 +15,7 @@ This was a small project created for the ECE 598RE [home page](https://courses.g
 <div class="viz-container">
 <div class="controls">
 <div class="control-group">
-<label>x₀: <span id="disp_x0">0.123</span></label>
+<label>x₀: <span id="disp_x0">0.1</span></label>
 <input type="range" id="inp_x0" min="0" max="1" step="0.001" value="0.123">
 </div>
 <div class="control-group">
@@ -23,14 +23,14 @@ This was a small project created for the ECE 598RE [home page](https://courses.g
 <input type="range" id="inp_steps" min="10" max="1000" step="10" value="50">
 </div>
 <div class="control-group">
-<label>Perturbation (ε): <span id="disp_eps">0.0010</span></label>
+<label>Perturbation: <span id="disp_eps">0.001</span></label>
 <input type="range" id="inp_eps" min="0" max="0.01" step="0.0001" value="0.001">
 </div>
 <div class="control-group">
-<label>Scale: <span id="disp_scale">2</span></label>
-<input type="range" id="inp_scale" min="1" max="10" step="1" value="2">
+<label>Scale: <span id="disp_scale">2.0</span></label>
+<input type="range" id="inp_scale" min="1" max="10" step="0.1" value="2">
 </div>
-<button id="playBtn">▶ Play</button>
+<button id="playBtn">Play</button>
 <span id="timeDisplay">t = 0</span>
 </div>
 
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
       currentX0 = parseFloat(x0Input.value);
       currentEps = parseFloat(epsInput.value);
       maxSteps = parseInt(stepsInput.value);
-      currentScale = parseInt(scaleInput.value);
+      currentScale = parseFloat(scaleInput.value);
 
       // Update display values in real-time
       const dispX0El = document.getElementById('disp_x0');
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (dispX0El) dispX0El.textContent = currentX0.toFixed(3);
       if (dispEpsEl) dispEpsEl.textContent = currentEps.toFixed(4);
       if (dispStepsEl) dispStepsEl.textContent = maxSteps;
-      if (dispScaleEl) dispScaleEl.textContent = currentScale;
+      if (dispScaleEl) dispScaleEl.textContent = currentScale.toFixed(1);
 
       // Run simulation with current variable values
       simulationData = runSimulation(currentX0, currentEps, currentScale, maxSteps);
@@ -340,9 +340,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Stop any ongoing animation
         stopAnimation();
         // Update the variable immediately
-        currentScale = parseInt(this.value);
+        currentScale = parseFloat(this.value);
         // Update display
-        dispScale.textContent = currentScale;
+        dispScale.textContent = currentScale.toFixed(1);
         // Update plots with new variable value
         updateAll();
       });
@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initX0) currentX0 = parseFloat(initX0.value);
     if (initEps) currentEps = parseFloat(initEps.value);
     if (initSteps) maxSteps = parseInt(initSteps.value);
-    if (initScale) currentScale = parseInt(initScale.value);
+    if (initScale) currentScale = parseFloat(initScale.value);
 
     // Initialize on page load
     updateAll();
