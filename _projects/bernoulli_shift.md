@@ -16,7 +16,7 @@ This was a small project created for the ECE 598RE [home page](https://courses.g
 <div class="controls">
 <div class="control-group">
 <label>x₀: <span id="disp_x0">0.1</span></label>
-<input type="range" id="inp_x0" min="0" max="1" step="0.001" value="0.123">
+<input type="range" id="inp_x0" min="0" max="1" step="0.001" value="0.1">
 </div>
 <div class="control-group">
 <label>Steps: <span id="disp_steps">50</span></label>
