@@ -8,7 +8,7 @@ category: work
 
 ## Overview
 
-This was a small project to visualize a simple dynamical system. This interactive visualization demonstrates the Bernoulli shift map. The map is defined by $$x_{t+1} = 2x_t \pmod 1,$$ which is equivalent to shifting the binary representation of a number one position to the right. This visualization shows how tiny perturbations in initial conditions lead to exponential divergence over time.
+This was a small project created for the ECE 598RE [home page](https://courses.grainger.illinois.edu/ECE598RE/fa2025/) to visualize a simple dynamical system. This interactive visualization demonstrates the Bernoulli shift map. The map is defined by $$x_{t+1} = nx_t \pmod 1,$$. This visualization shows how tiny perturbations in initial conditions lead to exponential divergence over time.
 
 ## Interactive Demo
 
@@ -25,6 +25,10 @@ This was a small project to visualize a simple dynamical system. This interactiv
 <div class="control-group">
 <label>Perturbation (ε): <span id="disp_eps">0.0010</span></label>
 <input type="range" id="inp_eps" min="0" max="0.01" step="0.0001" value="0.001">
+</div>
+<div class="control-group">
+<label>Scale: <span id="disp_scale">2</span></label>
+<input type="range" id="inp_scale" min="1" max="10" step="1" value="2">
 </div>
 <button id="playBtn">▶ Play</button>
 <span id="timeDisplay">t = 0</span>
@@ -110,23 +114,24 @@ document.addEventListener('DOMContentLoaded', function() {
     let chartTraj, chartErr;
 
     // Store current values as variables
-    let currentX0 = 0.123;
+    let currentX0 = 0.1;
     let currentEps = 0.001;
+    let currentScale = 2;
     let maxSteps = 50;
     let isPlaying = false;
     let animationFrameId = null;
     let currentStep = 0;
     let simulationData = null;
 
-    function runSimulation(x0, eps, steps=50) {
+    function runSimulation(x0, eps, scale, steps=50) {
       let t1 = [x0], t2 = [x0 + eps];
       let diff = [Math.abs(eps)];
       let labels = [0];
       let s1 = x0, s2 = x0 + eps;
 
       for (let i = 1; i <= steps; i++) {
-        s1 = (s1 * 2) % 1;
-        s2 = (s2 * 2) % 1;
+        s1 = (s1 * scale) % 1;
+        s2 = (s2 * scale) % 1;
         t1.push(s1); t2.push(s2);
         diff.push(Math.abs(s1 - s2));
         labels.push(i);
@@ -198,22 +203,26 @@ document.addEventListener('DOMContentLoaded', function() {
       const x0Input = document.getElementById('inp_x0');
       const epsInput = document.getElementById('inp_eps');
       const stepsInput = document.getElementById('inp_steps');
-      if (!x0Input || !epsInput || !stepsInput) return;
+      const scaleInput = document.getElementById('inp_scale');
+      if (!x0Input || !epsInput || !stepsInput || !scaleInput) return;
 
       currentX0 = parseFloat(x0Input.value);
       currentEps = parseFloat(epsInput.value);
       maxSteps = parseInt(stepsInput.value);
+      currentScale = parseInt(scaleInput.value);
 
       // Update display values in real-time
       const dispX0El = document.getElementById('disp_x0');
       const dispEpsEl = document.getElementById('disp_eps');
       const dispStepsEl = document.getElementById('disp_steps');
+      const dispScaleEl = document.getElementById('disp_scale');
       if (dispX0El) dispX0El.textContent = currentX0.toFixed(3);
       if (dispEpsEl) dispEpsEl.textContent = currentEps.toFixed(4);
       if (dispStepsEl) dispStepsEl.textContent = maxSteps;
+      if (dispScaleEl) dispScaleEl.textContent = currentScale;
 
       // Run simulation with current variable values
-      simulationData = runSimulation(currentX0, currentEps, maxSteps);
+      simulationData = runSimulation(currentX0, currentEps, currentScale, maxSteps);
       currentStep = 0;
 
       // Update charts to show full simulation
@@ -324,6 +333,21 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
+    const inpScale = document.getElementById('inp_scale');
+    const dispScale = document.getElementById('disp_scale');
+    if (inpScale && dispScale) {
+      inpScale.addEventListener('input', function() {
+        // Stop any ongoing animation
+        stopAnimation();
+        // Update the variable immediately
+        currentScale = parseInt(this.value);
+        // Update display
+        dispScale.textContent = currentScale;
+        // Update plots with new variable value
+        updateAll();
+      });
+    }
+
     // Play button
     const playBtn = document.getElementById('playBtn');
     if (playBtn) {
@@ -334,9 +358,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const initX0 = document.getElementById('inp_x0');
     const initEps = document.getElementById('inp_eps');
     const initSteps = document.getElementById('inp_steps');
+    const initScale = document.getElementById('inp_scale');
     if (initX0) currentX0 = parseFloat(initX0.value);
     if (initEps) currentEps = parseFloat(initEps.value);
     if (initSteps) maxSteps = parseInt(initSteps.value);
+    if (initScale) currentScale = parseInt(initScale.value);
 
     // Initialize on page load
     updateAll();
