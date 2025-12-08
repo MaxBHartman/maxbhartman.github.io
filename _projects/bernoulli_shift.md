@@ -8,9 +8,43 @@ category: work
 
 ## Overview
 
-This was a small project created for the ECE 598RE [home page](https://courses.grainger.illinois.edu/ECE598RE/fa2025/) to visualize a simple dynamical system. This interactive visualization demonstrates the Bernoulli shift map. The map is defined by $$x_{t+1} = nx_t \pmod 1,$$. This visualization shows how tiny perturbations in initial conditions lead to exponential divergence over time.
+This was a small project created for the [ECE 598RE](https://courses.grainger.illinois.edu/ECE598RE/fa2025/) (Dynamical Systems & Neural Networks) webpage to visualize initial state perturbations in the Bernoulli shift map dynamical system. Specificially, the two initial states are defined: 
+$$
+x_0 = x_0
+$$
+$$
+x'_0=x_0+\epsilon
+$$
+The maps are then defined as:
 
-## Interactive Demo
+$$x_{t+1} = ax_t \pmod 1$$ 
+$$x'_{t+1} = ax'_t \pmod 1$$ 
+
+## Explaination of Parameters
+
+$x_0$: is the initial unperturbed state at time $t$.
+
+Perturbation ($\epsilon$): is the inital perburtbation applied at $t=0$.
+
+$a$: is the scaling factor
+
+Steps: Maximum number of time steps.
+
+## Connections to Dynamical System and Stability 
+
+The Bernoulli Shift Map is a standard toy model in dynamical systems theory for demonstrating how deterministic chaos arises in simple maps. The system's chaotic nature can be easily seen by directly computing its Lyapunov Exponent (LE) $\lambda$:
+
+$$\lambda = \lim_{n \to \infty} \frac{1}{n} \sum_{i=0}^{n-1} \ln |f'(x_i)|\\
+
+= \lim_{n \to \infty} \frac{1}{n} \sum_{i=0}^{n-1} \ln a = ln(a)$$
+
+since $f'(x_i)=a$ for all $x_i\in [0,1]$.
+
+Additionally, for this system, the Kolmogorov-Sinai (KS) Entropy $H_{KS}=ln(a)$ (the sum of all positive LEs).
+
+If $a=1$, the system is not chaotic (Notice that $x_t=x'_t$ for all $t$), whereas if $a>1$, the system is chaotic (We assume $a\geq0$ for simplicity). In the $a=2$ case (the standard Bernoulli shift map), this map can be interpretted as a left bit shift. 
+
+## Demo
 
 <div class="viz-container">
 <div class="controls">
