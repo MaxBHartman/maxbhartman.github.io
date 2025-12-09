@@ -24,11 +24,11 @@ $$x'_{t+1} = ax'_t \pmod 1$$
 
 $x_0$: is the initial unperturbed state at time $t$.
 
-Perturbation ($\epsilon$): is the inital perburtbation applied at $t=0$.
+Perturbation ($\epsilon$): is the initial perturbation applied at $t=0$. When $t$ is small, look at how $x_t\approx x'_t$, then look for the point at which the trajectories diverge from each other.
 
-$a$: is the scaling factor
+$a$: is the scaling factor. When $a\leq1$, the system is stable and will converge towards 0, however the system is chaotic when $a>1$. In the $a=2$ case (the standard Bernoulli shift map), this map can be interpreted as a left bit shift.
 
-Steps: Maximum number of time steps.
+Steps: Maximum number of time steps. As the number of steps increase, nearly all rational initial seeds will converge. 
 
 ## Connections to Dynamical System and Stability 
 
