@@ -79,6 +79,9 @@ If $a=1$, the system is not chaotic (Notice that $x_t=x'_t$ for all $t$), wherea
 <div class="chart-wrapper">
 <canvas id="errChart"></canvas>
 </div>
+<div class="chart-wrapper">
+<canvas id="cobwebChart"></canvas>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -142,15 +145,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const ctxTraj = document.getElementById('trajChart');
     const ctxErr = document.getElementById('errChart');
+    const ctxCobweb = document.getElementById('cobwebChart');
 
-    if (!ctxTraj || !ctxErr) {
+    if (!ctxTraj || !ctxErr || !ctxCobweb) {
       console.error('Canvas elements not found');
       return;
     }
 
     const ctxTraj2d = ctxTraj.getContext('2d');
     const ctxErr2d = ctxErr.getContext('2d');
+    const ctxCobweb2d = ctxCobweb.getContext('2d');
     let chartTraj, chartErr;
+
+    // Set cobweb canvas size
+    function resizeCobwebCanvas() {
+      const container = ctxCobweb.parentElement;
+      const rect = container.getBoundingClientRect();
+      ctxCobweb.width = rect.width;
+      ctxCobweb.height = 250;
+    }
+    resizeCobwebCanvas();
+    window.addEventListener('resize', resizeCobwebCanvas);
 
     // Store current values as variables
     let currentX0 = 0.1;
@@ -236,6 +251,113 @@ document.addEventListener('DOMContentLoaded', function() {
           plugins: { legend: { display: false } }
         }
       });
+
+      // Update cobweb plot
+      drawCobwebPlot(currentX0, currentScale, maxSteps, upToStep);
+    }
+
+    function drawCobwebPlot(x0, scale, steps, upToStep = null) {
+      const canvas = ctxCobweb;
+      const width = canvas.width;
+      const height = canvas.height;
+      const padding = 40;
+      const plotWidth = width - 2 * padding;
+      const plotHeight = height - 2 * padding;
+
+      // Clear canvas
+      ctxCobweb2d.clearRect(0, 0, width, height);
+
+      // Helper functions to convert between plot and canvas coordinates
+      const toCanvasX = (x) => padding + x * plotWidth;
+      const toCanvasY = (y) => padding + (1 - y) * plotHeight;
+
+      // Draw axes
+      ctxCobweb2d.strokeStyle = '#888';
+      ctxCobweb2d.lineWidth = 1;
+      ctxCobweb2d.beginPath();
+      ctxCobweb2d.moveTo(toCanvasX(0), toCanvasY(0));
+      ctxCobweb2d.lineTo(toCanvasX(1), toCanvasY(0));
+      ctxCobweb2d.moveTo(toCanvasX(0), toCanvasY(0));
+      ctxCobweb2d.lineTo(toCanvasX(0), toCanvasY(1));
+      ctxCobweb2d.stroke();
+
+      // Draw the function f(x) = ax mod 1
+      ctxCobweb2d.strokeStyle = '#3182ce';
+      ctxCobweb2d.lineWidth = 2;
+      ctxCobweb2d.beginPath();
+      const numPoints = 500;
+      for (let i = 0; i <= numPoints; i++) {
+        const x = i / numPoints;
+        const y = (x * scale) % 1;
+        if (i === 0) {
+          ctxCobweb2d.moveTo(toCanvasX(x), toCanvasY(y));
+        } else {
+          ctxCobweb2d.lineTo(toCanvasX(x), toCanvasY(y));
+        }
+      }
+      ctxCobweb2d.stroke();
+
+      // Draw the diagonal line y = x
+      ctxCobweb2d.strokeStyle = '#999';
+      ctxCobweb2d.lineWidth = 1;
+      ctxCobweb2d.setLineDash([5, 5]);
+      ctxCobweb2d.beginPath();
+      ctxCobweb2d.moveTo(toCanvasX(0), toCanvasY(0));
+      ctxCobweb2d.lineTo(toCanvasX(1), toCanvasY(1));
+      ctxCobweb2d.stroke();
+      ctxCobweb2d.setLineDash([]);
+
+      // Draw the cobweb trajectory
+      const maxStep = upToStep !== null ? upToStep : steps;
+      if (maxStep >= 0) {
+        ctxCobweb2d.strokeStyle = '#e53e3e';
+        ctxCobweb2d.lineWidth = 2;
+        ctxCobweb2d.beginPath();
+
+        let currentX = x0;
+        // Start at (x0, x0) on the diagonal
+        ctxCobweb2d.moveTo(toCanvasX(currentX), toCanvasY(currentX));
+
+        for (let i = 0; i <= maxStep; i++) {
+          // Vertical line to function
+          const nextY = (currentX * scale) % 1;
+          ctxCobweb2d.lineTo(toCanvasX(currentX), toCanvasY(nextY));
+
+          // Horizontal line to diagonal
+          ctxCobweb2d.lineTo(toCanvasX(nextY), toCanvasY(nextY));
+
+          currentX = nextY;
+        }
+        ctxCobweb2d.stroke();
+
+        // Draw points at each iteration
+        currentX = x0;
+        ctxCobweb2d.fillStyle = '#e53e3e';
+        // Starting point
+        ctxCobweb2d.beginPath();
+        ctxCobweb2d.arc(toCanvasX(currentX), toCanvasY(currentX), 4, 0, 2 * Math.PI);
+        ctxCobweb2d.fill();
+
+        for (let i = 0; i <= maxStep; i++) {
+          const nextY = (currentX * scale) % 1;
+          ctxCobweb2d.beginPath();
+          ctxCobweb2d.arc(toCanvasX(nextY), toCanvasY(nextY), 4, 0, 2 * Math.PI);
+          ctxCobweb2d.fill();
+          currentX = nextY;
+        }
+      }
+
+      // Draw labels
+      ctxCobweb2d.fillStyle = '#000';
+      ctxCobweb2d.font = '12px sans-serif';
+      ctxCobweb2d.textAlign = 'center';
+      ctxCobweb2d.fillText('x', width / 2, height - 10);
+      ctxCobweb2d.save();
+      ctxCobweb2d.translate(15, height / 2);
+      ctxCobweb2d.rotate(-Math.PI / 2);
+      ctxCobweb2d.textAlign = 'center';
+      ctxCobweb2d.fillText('f(x)', 0, 0);
+      ctxCobweb2d.restore();
     }
 
     function updateAll() {
