@@ -8,17 +8,20 @@ category: work
 
 ## Overview
 
-This was a small project created for the [ECE 598RE](https://courses.grainger.illinois.edu/ECE598RE/fa2025/) (Dynamical Systems & Neural Networks) webpage to visualize initial state perturbations in the Bernoulli shift map dynamical system. Specificially, the two initial states are defined: 
+This was a small project created for the [ECE 598RE](https://courses.grainger.illinois.edu/ECE598RE/fa2025/) (Dynamical Systems & Neural Networks) webpage to visualize initial state perturbations in the Bernoulli shift map dynamical system. Specificially, the two initial states are defined:
+
 $$
 x_0 = x_0
 $$
+
 $$
 x'_0=x_0+\epsilon
 $$
+
 The maps are then defined as:
 
-$$x_{t+1} = ax_t \pmod 1$$ 
-$$x'_{t+1} = ax'_t \pmod 1$$ 
+$$x_{t+1} = ax_t \pmod 1$$
+$$x'_{t+1} = ax'_t \pmod 1$$
 
 ## Explaination of Parameters
 
@@ -28,21 +31,23 @@ Perturbation ($\epsilon$): is the initial perturbation applied at $t=0$. When $t
 
 $a$: is the scaling factor. When $a\leq1$, the system is stable and will converge towards 0, however the system is chaotic when $a>1$. In the $a=2$ case (the standard Bernoulli shift map), this map can be interpreted as a left bit shift.
 
-Steps: Maximum number of time steps. As the number of steps increase, nearly all rational initial seeds will converge. 
+Steps: Maximum number of time steps. As the number of steps increase, nearly all rational initial seeds will converge.
 
-## Connections to Dynamical System and Stability 
+## Connections to Dynamical System and Stability
 
 The Bernoulli Shift Map is a standard toy model in dynamical systems theory for demonstrating how deterministic chaos arises in simple maps. The system's chaotic nature can be easily seen by directly computing its Lyapunov Exponent (LE) $\lambda$:
 
-$$\lambda = \lim_{n \to \infty} \frac{1}{n} \sum_{i=0}^{n-1} \ln |f'(x_i)|\\
+$$
+\lambda = \lim_{n \to \infty} \frac{1}{n} \sum_{i=0}^{n-1} \ln |f'(x_i)|\\
 
-= \lim_{n \to \infty} \frac{1}{n} \sum_{i=0}^{n-1} \ln a = ln(a)$$
+= \lim_{n \to \infty} \frac{1}{n} \sum_{i=0}^{n-1} \ln a = ln(a)
+$$
 
 since $f'(x_i)=a$ for all $x_i\in [0,1]$.
 
 Additionally, for this system, the Kolmogorov-Sinai (KS) Entropy $H_{KS}=ln(a)$ (the sum of all positive LEs).
 
-If $a=1$, the system is not chaotic (Notice that $x_t=x'_t$ for all $t$), whereas if $a>1$, the system is chaotic (We assume $a\geq0$ for simplicity). In the $a=2$ case (the standard Bernoulli shift map), this map can be interpretted as a left bit shift. 
+If $a=1$, the system is not chaotic (Notice that $x_t=x'_t$ for all $t$), whereas if $a>1$, the system is chaotic (We assume $a\geq0$ for simplicity). In the $a=2$ case (the standard Bernoulli shift map), this map can be interpretted as a left bit shift.
 
 ## Demo
 
