@@ -187,8 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
           labels: labels,
           datasets: [
-            { label: 'Original', data: t1, borderColor: '#3182ce', borderWidth: 2, pointRadius: 0 },
-            { label: 'Perturbed', data: t2, borderColor: '#e53e3e', borderWidth: 2, pointRadius: 0 }
+            { label: 'Original', data: t1, borderColor: '#3182ce', borderWidth: 2, pointRadius: 0, tension: 0 },
+            { label: 'Perturbed', data: t2, borderColor: '#e53e3e', borderWidth: 2, pointRadius: 0, tension: 0 }
           ]
         },
         options: {
@@ -219,7 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
             backgroundColor: 'rgba(74, 85, 104, 0.1)', 
             borderWidth: 2, 
             fill: true, 
-            pointRadius: 0 
+            pointRadius: 0,
+            tension: 0
           }]
         },
         options: {
@@ -278,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
         currentStep++;
-        animationFrameId = setTimeout(animateStep, 100);
+        animationFrameId = setTimeout(animateStep, 200);
       } else {
         stopAnimation();
       }
