@@ -120,13 +120,22 @@ document.addEventListener('DOMContentLoaded', function() {
       });
 
       // Update cobweb plot
-      drawCobwebPlot(currentX0, currentScale, maxSteps, upToStep);
+      drawCobwebPlot(data, currentScale, upToStep);
     }
 
-    function drawCobwebPlot(x0, scale, steps, upToStep = null) {
+    function drawCobwebPlot(data, scale, upToStep = null) {
+      // Ensure canvas is properly sized
+      resizeCobwebCanvas();
+      
       const canvas = ctxCobweb;
       const width = canvas.width;
       const height = canvas.height;
+      
+      // If canvas is not properly sized, skip drawing
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+      
       const padding = 40;
       const plotWidth = width - 2 * padding;
       const plotHeight = height - 2 * padding;
@@ -174,43 +183,38 @@ document.addEventListener('DOMContentLoaded', function() {
       ctxCobweb2d.stroke();
       ctxCobweb2d.setLineDash([]);
 
-      // Draw the cobweb trajectory
-      const maxStep = upToStep !== null ? upToStep : steps;
-      if (maxStep >= 0) {
+      // Draw the cobweb trajectory using the actual trajectory data
+      const maxStep = upToStep !== null ? upToStep : data.t1.length - 1;
+      if (maxStep >= 0 && data.t1.length > 0) {
         ctxCobweb2d.strokeStyle = '#e53e3e';
         ctxCobweb2d.lineWidth = 2;
         ctxCobweb2d.beginPath();
 
-        let currentX = x0;
         // Start at (x0, x0) on the diagonal
+        const x0 = data.t1[0];
+        let currentX = x0;
         ctxCobweb2d.moveTo(toCanvasX(currentX), toCanvasY(currentX));
 
-        for (let i = 0; i <= maxStep; i++) {
-          // Vertical line to function
-          const nextY = (currentX * scale) % 1;
-          ctxCobweb2d.lineTo(toCanvasX(currentX), toCanvasY(nextY));
+        // Draw cobweb pattern using actual trajectory data
+        for (let i = 0; i <= maxStep && i < data.t1.length - 1; i++) {
+          currentX = data.t1[i];
+          const nextX = data.t1[i + 1];
+          
+          // Vertical line from diagonal to function: (currentX, currentX) -> (currentX, nextX)
+          ctxCobweb2d.lineTo(toCanvasX(currentX), toCanvasY(nextX));
 
-          // Horizontal line to diagonal
-          ctxCobweb2d.lineTo(toCanvasX(nextY), toCanvasY(nextY));
-
-          currentX = nextY;
+          // Horizontal line from function to diagonal: (currentX, nextX) -> (nextX, nextX)
+          ctxCobweb2d.lineTo(toCanvasX(nextX), toCanvasY(nextX));
         }
         ctxCobweb2d.stroke();
 
-        // Draw points at each iteration
-        currentX = x0;
+        // Draw points at each iteration on the diagonal
         ctxCobweb2d.fillStyle = '#e53e3e';
-        // Starting point
-        ctxCobweb2d.beginPath();
-        ctxCobweb2d.arc(toCanvasX(currentX), toCanvasY(currentX), 4, 0, 2 * Math.PI);
-        ctxCobweb2d.fill();
-
-        for (let i = 0; i <= maxStep; i++) {
-          const nextY = (currentX * scale) % 1;
+        for (let i = 0; i <= maxStep && i < data.t1.length; i++) {
+          const x = data.t1[i];
           ctxCobweb2d.beginPath();
-          ctxCobweb2d.arc(toCanvasX(nextY), toCanvasY(nextY), 4, 0, 2 * Math.PI);
+          ctxCobweb2d.arc(toCanvasX(x), toCanvasY(x), 4, 0, 2 * Math.PI);
           ctxCobweb2d.fill();
-          currentX = nextY;
         }
       }
 
