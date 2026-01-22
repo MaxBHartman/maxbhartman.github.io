@@ -44,7 +44,10 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/_pages/bookshelf/";
           },
-        },{id: "news-i-graduated-from-uiuc-in-computer-engineering-and-a-math-minor-with-highest-honors",
+        },{id: "news-my-paper-federated-nonlinear-system-identification-was-accepted-to-the-2026-american-control-conference-in-new-orleans",
+          title: 'My paper, Federated Nonlinear System Identification, was accepted to The 2026 American Control...',
+          description: "",
+          section: "News",},{id: "news-i-graduated-from-uiuc-in-computer-engineering-and-a-math-minor-with-highest-honors",
           title: 'I graduated from UIUC in Computer Engineering and a math minor with highest...',
           description: "",
           section: "News",},{id: "news-i-completed-my-summer-internship-at-aws-in-the-aws-loggingcore-observability-department",
