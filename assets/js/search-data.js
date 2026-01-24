@@ -44,10 +44,7 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/_pages/bookshelf/";
           },
-        },{id: "news-my-paper-federated-nonlinear-system-identification-was-accepted-to-the-2026-american-control-conference-in-new-orleans",
-          title: 'My paper, Federated Nonlinear System Identification, was accepted to The 2026 American Control...',
-          description: "",
-          section: "News",},{id: "news-i-graduated-from-uiuc-in-computer-engineering-and-a-math-minor-with-highest-honors",
+        },{id: "news-i-graduated-from-uiuc-in-computer-engineering-and-a-math-minor-with-highest-honors",
           title: 'I graduated from UIUC in Computer Engineering and a math minor with highest...',
           description: "",
           section: "News",},{id: "news-i-completed-my-summer-internship-at-aws-in-the-aws-loggingcore-observability-department",
@@ -58,6 +55,9 @@ ninja.data = [{
           description: "",
           section: "News",},{id: "news-my-paper-unmasking-the-functionality-of-early-layers-in-vlms-was-accepted-to-the-excv-workshop-at-iccv-2025",
           title: 'My paper, Unmasking the functionality of early layers in VLMs, was accepted to...',
+          description: "",
+          section: "News",},{id: "news-my-paper-federated-nonlinear-system-identification-was-accepted-to-the-2026-american-control-conference-in-new-orleans",
+          title: 'My paper, Federated Nonlinear System Identification, was accepted to The 2026 American Control...',
           description: "",
           section: "News",},{id: "projects-bernoulli-shift-map-visualization",
           title: 'Bernoulli Shift Map Visualization',
