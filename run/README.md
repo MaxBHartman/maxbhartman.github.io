@@ -1,125 +1,59 @@
-# Your Strava training log
+# Training log — live from Strava
 
-A personal stats site in the spirit of [nodaysoff.run](https://nodaysoff.run/),
-built from **your own** Strava data. It covers every activity type — runs, rides,
-swims, hikes — with totals, notable efforts, a wall of charts, geography, and a
-day-by-day calendar.
+`/run` fetches your Strava data on every page view via a small Cloudflare
+Worker (`../worker/`), rather than reading a committed data file. There's no
+`data.js` generated or checked in — the dashboard calls `GET /api/strava` and
+renders whatever comes back.
 
-Two pieces:
+```
+run/index.html      dashboard — fetches /api/strava, renders charts/tables
+run/fetch_strava.py one-time local bootstrap (see below), nothing else
+worker/              Cloudflare Worker: proxies Strava, holds the OAuth
+                     secret, does daily geo/weather enrichment
+```
 
-| File | What it does |
-|------|--------------|
-| `fetch_strava.py` | Logs into Strava (your data only), downloads your full history, writes `data.js` |
-| `index.html` | The dashboard. Open it in a browser; it reads `data.js` |
+## Why a Worker
 
-You can preview it right now with the included demo data — just open `index.html`.
-When you're ready for your real numbers, follow the steps below.
+Refreshing a Strava OAuth token requires the app's **client secret**, which
+can never be shipped in client-side JS on a public site — anyone viewing page
+source could extract it and pull your activity history directly. The Worker
+holds that secret server-side; the page only ever talks to `/api/strava`.
 
----
+## One-time setup
 
-## Step 1 — Create a Strava API application (2 minutes, free)
-
-1. Go to **https://www.strava.com/settings/api** (log in if needed).
-2. Fill in the form:
-   - **Application Name:** anything, e.g. `My Training Log`
-   - **Category:** `Data Importer` is fine
+1. Create a Strava API application at
+   [strava.com/settings/api](https://www.strava.com/settings/api):
    - **Website:** `http://localhost`
-   - **Authorization Callback Domain:** `localhost`  ← this exact value matters
-3. Click **Create**. You'll now see your **Client ID** and **Client Secret**.
+   - **Authorization Callback Domain:** `localhost` (exact value matters)
+2. `pip install -r requirements.txt`
+3. Run the OAuth login once, locally, to obtain a refresh token:
+   ```
+   export STRAVA_CLIENT_ID=your_client_id
+   export STRAVA_CLIENT_SECRET=your_client_secret
+   python3 fetch_strava.py
+   ```
+   It prints an authorize URL — open it, click Authorize, then copy the
+   `code=` value from the (expected-to-fail) `localhost` redirect and paste
+   it back into the terminal. This writes `strava_tokens.json` locally —
+   open it and copy the `refresh_token` value.
+4. Seed that refresh token into the Worker and deploy it — see
+   `../worker/wrangler.toml` and the deploy checklist for exact commands.
 
-Your app starts in "single player mode," which is exactly right — it can only ever
-read your own account.
-
-## Step 2 — Give the script your credentials
-
-Create a file named `.env` in this folder (same place as `fetch_strava.py`):
-
-```
-STRAVA_CLIENT_ID=your_client_id_here
-STRAVA_CLIENT_SECRET=your_client_secret_here
-```
-
-(Or `export` those two variables in your shell — either works.)
-
-## Step 3 — Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-`requests` is required. `reverse_geocoder` + `pycountry` are optional and only power
-the Geography section; skip them if you don't want maps.
-
-## Step 4 — Download your data
-
-```bash
-python fetch_strava.py
-```
-
-The first run prints a Strava authorization URL. Open it, click **Authorize**, and
-your browser will jump to a `http://localhost/...` page that **fails to load — that's
-expected**. Copy the `code=` value from that page's address bar and paste it back into
-the terminal. The script saves a token so you won't have to do this again; future runs
-just refresh automatically.
-
-It then pages through your whole history (about 15 requests per few-thousand activities,
-well under Strava's limits) and writes `data.js`.
-
-## Step 5 — Open the dashboard
-
-Just double-click `index.html`, or open it in any browser. Because `data.js` is a plain
-script (not a `fetch`), it works straight from `file://` with no local server needed.
-
-> The charts use D3 and the maps use public boundary files, both loaded from a CDN, so
-> the page needs an internet connection the first time you open it.
-
----
-
-## Options & extras
-
-**Add weather** (temperature + conditions charts). Strava doesn't store weather, so this
-looks up historical weather for each activity's time and place via the free
-[Open-Meteo](https://open-meteo.com/) archive (no key needed). It's slower:
-
-```bash
-python fetch_strava.py --weather
-```
-
-**Test quickly** with just your most recent activities:
-
-```bash
-python fetch_strava.py --limit 200
-```
-
-**Write your story.** Open `index.html`, search for `EDIT THIS`, and replace the
-placeholder foreword with your own text.
-
-**Refresh later.** Re-run `python fetch_strava.py` any time to pull in new activities.
-
-**Put it online.** It's three static files (`index.html`, `data.js`, and nothing else
-required). Drop them into any static host — GitHub Pages, Netlify, Cloudflare Pages —
-and it's live. Note that this publishes your `data.js`, including approximate start
-coordinates, so only do this if you're comfortable sharing that.
-
----
-
-## What comes from where
-
-- **Distance, time, elevation, pace, heart rate, start time, indoor/outdoor, route** —
-  straight from Strava's activity list.
-- **Countries & US states** — derived offline from each activity's start coordinates.
-- **Temperature & conditions** — optional, from Open-Meteo (`--weather`).
-- **Streaks, totals, all charts** — computed in your browser from `data.js`.
-
-Sections with no data simply don't appear (e.g. no heart-rate monitor → no HR charts).
+After this one-time step, `fetch_strava.py` isn't part of the ongoing
+pipeline — the Worker refreshes its own access token automatically from then
+on. (`--demo` still works if you just want to preview the dashboard's look
+with synthetic data by pointing `index.html` at a local `data.js` again.)
 
 ## Privacy
 
-Everything runs locally. Your token lives in `strava_tokens.json` on your machine and is
-never sent anywhere except Strava. Add `.env` and `strava_tokens.json` to `.gitignore`
-if you put this in a repo.
+The Worker returns the same slimmed/aggregated shape this page renders
+(distance, pace, elevation, approximate start coordinates, etc. — not raw GPS
+tracks). Geography and Weather are resolved once per activity by a daily cron
+in the Worker and cached there permanently, since historical weather/location
+for a past activity never changes; both sections stay hidden until the first
+cron run has enriched something.
 
 ## Credits
 
-Concept and design inspired by **nodaysoff.run** by Adrien Friggeri. Fonts: Jost, Space
-Mono. Boundaries: world-atlas / us-atlas (Natural Earth).
+Concept and design inspired by **nodaysoff.run** by Adrien Friggeri. Fonts:
+Jost, Space Mono.

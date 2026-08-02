@@ -107,11 +107,20 @@ footer{border-top:1px solid var(--line);padding:40px 0 70px;color:var(--muted);f
 </header>
 <main class="wrap" id="app"><p style="font-family:var(--mono);color:var(--muted);padding:60px 0">Loading data…</p></main>
 
-<script src="data.js"></script>
 <script>
 "use strict";
+(async function () {
+let D;
+try {
+  const res = await fetch("/api/strava");
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  D = await res.json();
+} catch (err) {
+  document.getElementById("app").innerHTML =
+    '<p style="font-family:var(--mono);color:#c00;padding:60px 0">Could not load live data: ' + err.message + '</p>';
+  return;
+}
 /* ============================ helpers ============================ */
-const D = window.STRAVA_DATA;
 const app = document.getElementById("app");
 const MI = "mi", FT = "ft";
 const fmtInt = n => Math.round(n).toLocaleString();
@@ -546,6 +555,7 @@ try{
   app.innerHTML='<p style="font-family:var(--mono);color:#c00;padding:40px 0">Something went wrong rendering the dashboard:<br>'+err.message+'</p>';
   console.error(err);
 }
+})();
 </script>
 </body>
 </html>
