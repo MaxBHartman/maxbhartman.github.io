@@ -46,9 +46,6 @@ h2.section-title{font-weight:500;font-size:30px;letter-spacing:.02em;margin:0 0 
 .tile{background:var(--bg);padding:26px 14px;text-align:center}
 .tile .n{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1}
 .tile .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:9px}
-/* ---- foreword ---- */
-.foreword p{font-size:18px;line-height:1.7;max-width:64ch;font-weight:300}
-.foreword .sig{font-family:var(--mono);font-size:13px;letter-spacing:.1em;color:var(--muted);margin-top:26px}
 /* ---- tabs / tables ---- */
 .tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:26px}
 .tab{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;padding:9px 15px;border:1px solid var(--line);background:var(--bg);color:var(--muted);cursor:pointer}
@@ -299,17 +296,6 @@ function chartCard(title,cap,node,full){
   if(cap)c.appendChild(el("p","chart-cap",cap));
   c.appendChild(node);
   return c;
-}
-
-function buildForeword(){
-  const s=sectionShell("Foreword","In their own words","");
-  const fw=el("div","foreword");
-  // EDIT THIS: write your own story between the <p> tags below.
-  fw.innerHTML=`
-    <p>I created this small tool to visualize my running progress since I started running. </p>
-    <div class="sig">— ${ (D.meta.athlete_name||"You") }</div>`;
-  s.appendChild(fw);
-  return s;
 }
 
 function buildTypeFilter(onChange){
@@ -594,7 +580,6 @@ function buildFooter(){
 try{
   app.innerHTML="";
   app.appendChild(buildHero());
-  app.appendChild(buildForeword());
 
   const filterable=el("div");
   function renderFilterable(){
