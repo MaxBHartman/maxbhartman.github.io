@@ -133,20 +133,33 @@ function isoLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padSta
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
-const acts = (D.activities||[]).filter(a=>a.date);
-acts.forEach(a=>{ a._d = new Date(a.datetime||a.date); a._dow = (a._d.getDay()+6)%7; a._hr = a._d.getHours(); });
-acts.sort((a,b)=> a.date<b.date?-1:1);
+const allActs = (D.activities||[]).filter(a=>a.date);
+allActs.forEach(a=>{ a._d = new Date(a.datetime||a.date); a._dow = (a._d.getDay()+6)%7; a._hr = a._d.getHours(); });
+allActs.sort((a,b)=> a.date<b.date?-1:1);
 const FOOT = new Set(["Run","TrailRun","Walk","Hike","VirtualRun"]);
-const footActs = acts.filter(a=>FOOT.has(a.type));
-const hasHR = acts.some(a=>a.avg_hr);
-const hasWeather = D.meta.has_weather && acts.some(a=>a.temp_f!=null);
-const hasGeo = D.meta.has_geo && acts.some(a=>a.country);
+const allTypes = [...new Set(allActs.map(a=>a.type))].sort();
+let selectedTypes = new Set(allTypes);
 
-/* daily totals + streaks */
-const dayMiles = new Map();
-acts.forEach(a=>dayMiles.set(a.date,(dayMiles.get(a.date)||0)+a.dist_mi));
-function computeStreaks(){
-  const days=[...dayMiles.keys()].sort();
+/* acts/footActs/etc. are the *filtered* working set, recomputed whenever the
+   activity-type toggle changes. allActs (below) stays the full lifetime set,
+   used only by the Hero banner so it always reads as the true lifetime total. */
+let acts, footActs, hasHR, hasWeather, hasGeo, dayMiles;
+function recomputeFiltered(){
+  acts = allActs.filter(a=>selectedTypes.has(a.type));
+  footActs = acts.filter(a=>FOOT.has(a.type));
+  hasHR = acts.some(a=>a.avg_hr);
+  hasWeather = D.meta.has_weather && acts.some(a=>a.temp_f!=null);
+  hasGeo = D.meta.has_geo && acts.some(a=>a.country);
+  dayMiles = new Map();
+  acts.forEach(a=>dayMiles.set(a.date,(dayMiles.get(a.date)||0)+a.dist_mi));
+}
+recomputeFiltered();
+
+/* lifetime streak — always over allActs, unaffected by the type filter */
+const allDayMiles = new Map();
+allActs.forEach(a=>allDayMiles.set(a.date,(allDayMiles.get(a.date)||0)+a.dist_mi));
+function computeStreaks(dm){
+  const days=[...dm.keys()].sort();
   let longest=0,cur=0,prev=null,lStart=null,lEnd=null,curStart=null;
   for(const d of days){
     const dt=new Date(d);
@@ -162,11 +175,11 @@ function computeStreaks(){
     const lastD=new Date(last);
     const gap=Math.round((today-lastD)/86400000);
     if(gap<=1){ current=1; let walk=new Date(lastD);
-      while(true){ walk=new Date(walk-86400000); if(dayMiles.has(walk.toISOString().slice(0,10)))current++; else break; } }
+      while(true){ walk=new Date(walk-86400000); if(dm.has(walk.toISOString().slice(0,10)))current++; else break; } }
   }
   return {longest,lStart,lEnd,current};
 }
-const streak=computeStreaks();
+const streak=computeStreaks(allDayMiles);
 
 /* ============================ generic SVG chart utils ============================ */
 function svg(w,h){ return d3.create("svg").attr("viewBox",`0 0 ${w} ${h}`).attr("preserveAspectRatio","xMidYMid meet"); }
@@ -229,15 +242,28 @@ function hbars(data,{w=560,rowH=30,mL=120,mR=48,fmtV=fmtInt,accent}={}){
   rows.append("text").attr("x",d=>x(d.v)+8).attr("y",rowH/2).attr("dy",".32em").attr("font-family","var(--mono)").attr("font-size",10.5).attr("fill","var(--muted)").text(d=>fmtV(d.v));
   return s.node();
 }
+function timeline(pts,{w=1120,h=260,mL=48,mR=10,mT=12,mB=28,fmtY=fmtInt}={}){
+  const s=svg(w,h); const iw=w-mL-mR, ih=h-mT-mB;
+  const x=d3.scaleTime().domain(d3.extent(pts,p=>p.x)).range([0,iw]);
+  const y=d3.scaleLinear().domain(d3.extent(pts,p=>p.y)).nice().range([ih,0]);
+  const g=s.append("g").attr("transform",`translate(${mL},${mT})`);
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtY).tickSize(-iw))
+    .call(g=>g.selectAll(".tick line").attr("class","gridline")).call(g=>g.select(".domain").remove());
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).ticks(7));
+  const line=d3.line().x(p=>x(p.x)).y(p=>y(p.y)).curve(d3.curveMonotoneX);
+  g.append("path").datum(pts).attr("fill","none").attr("stroke","var(--accent)").attr("stroke-width",1.4).attr("d",line);
+  g.selectAll("circle").data(pts).join("circle").attr("class","dot").attr("r",2).attr("cx",p=>x(p.x)).attr("cy",p=>y(p.y));
+  return s.node();
+}
 
 /* ============================ builders ============================ */
 function buildHero(){
-  const first=acts[0].date, last=acts[acts.length-1].date;
+  const first=allActs[0].date, last=allActs[allActs.length-1].date;
   const d0=new Date(first), d1=new Date();
   let y=d1.getFullYear()-d0.getFullYear(), m=d1.getMonth()-d0.getMonth(), dd=d1.getDate()-d0.getDate();
   if(dd<0){ m--; dd+=new Date(d1.getFullYear(),d1.getMonth(),0).getDate(); }
   if(m<0){ y--; m+=12; }
-  const totMi=d3.sum(acts,a=>a.dist_mi), totSec=d3.sum(acts,a=>a.moving_s), totFt=d3.sum(acts,a=>a.elev_ft);
+  const totMi=d3.sum(allActs,a=>a.dist_mi), totSec=d3.sum(allActs,a=>a.moving_s), totFt=d3.sum(allActs,a=>a.elev_ft);
   const name=(D.meta.athlete_name||"").trim();
   const title = name ? (name.split(" ")[0].toUpperCase()+"’S LOG") : "TRAINING LOG";
 
@@ -250,7 +276,7 @@ function buildHero(){
   });
   sec.appendChild(span);
   const tiles=el("div","tiles");
-  [[fmtInt(acts.length),"activities"],[fmtInt(totMi),"miles"],[fmtInt(totSec/3600),"hours"],[fmtInt(totFt/1000)+"k","ft climbed"]]
+  [[fmtInt(allActs.length),"activities"],[fmtInt(totMi),"miles"],[fmtInt(totSec/3600),"hours"],[fmtInt(totFt/1000)+"k","ft climbed"]]
     .forEach(([n,l])=>{ const t=el("div","tile"); t.appendChild(el("div","n",n)); t.appendChild(el("div","l",l)); tiles.appendChild(t); });
   sec.appendChild(tiles);
   // streak line
@@ -287,6 +313,26 @@ function buildForeword(){
     the richer it gets.</p>
     <div class="sig">— ${ (D.meta.athlete_name||"You") }</div>`;
   s.appendChild(fw);
+  return s;
+}
+
+function buildTypeFilter(onChange){
+  const s=sectionShell("Filter","Activity types","toggle which types feed everything below (the totals up top always cover your whole history)");
+  const row=el("div","tabs");
+  allTypes.forEach(t=>{
+    const b=el("button","tab active",pretty(t));
+    b.onclick=()=>{
+      if(selectedTypes.has(t)){
+        if(selectedTypes.size===1) return; // always keep at least one type selected
+        selectedTypes.delete(t); b.classList.remove("active");
+      } else {
+        selectedTypes.add(t); b.classList.add("active");
+      }
+      onChange();
+    };
+    row.appendChild(b);
+  });
+  s.appendChild(row);
   return s;
 }
 
@@ -381,6 +427,10 @@ function buildStats(){
     const bins=d3.range(lo,hi+1).map(m=>({k:(m%2===0?m+"′":""),_m:m,v:paces.filter(p=>p>=m*60&&p<(m+1)*60).length}));
     const mean=d3.mean(paces);
     grid.appendChild(chartCard("Pace distribution",`mean ${pace(mean)} /mi · median ${pace(d3.median(paces))} /mi`,vbars(bins,{fmtY:fmtInt})));
+
+    const pacePts=footActs.filter(a=>a.pace_s_per_mi).map(a=>({x:a._d,y:a.pace_s_per_mi}));
+    grid.appendChild(chartCard("Pace over time","foot activities, seconds per mile",
+      timeline(pacePts,{fmtY:d=>pace(d)}),true));
   }
 
   // HR zones
@@ -395,6 +445,10 @@ function buildStats(){
         scatter(pts,{xDom:[d3.min(pts,p=>p.x)-5,d3.max(pts,p=>p.x)+5],yDom:[d3.min(pts,p=>p.y)-20,d3.max(pts,p=>p.y)+20],
           xLabel:"avg heart rate (bpm)",yLabel:"pace (min/mi)",fmtX:d=>d,fmtY:d=>pace(d)}),true));
     }
+
+    const hrPts=acts.filter(a=>a.avg_hr).map(a=>({x:a._d,y:a.avg_hr}));
+    grid.appendChild(chartCard("Heart rate over time","average bpm per activity",
+      timeline(hrPts,{fmtY:fmtInt}),true));
   }
 
   // weather
@@ -546,10 +600,19 @@ try{
   app.innerHTML="";
   app.appendChild(buildHero());
   app.appendChild(buildForeword());
-  app.appendChild(buildNotable());
-  app.appendChild(buildStats());
-  if(hasGeo) app.appendChild(buildGeography());
-  app.appendChild(buildCalendar());
+
+  const filterable=el("div");
+  function renderFilterable(){
+    filterable.innerHTML="";
+    filterable.appendChild(buildNotable());
+    filterable.appendChild(buildStats());
+    if(hasGeo) filterable.appendChild(buildGeography());
+    filterable.appendChild(buildCalendar());
+  }
+  app.appendChild(buildTypeFilter(()=>{ recomputeFiltered(); renderFilterable(); }));
+  renderFilterable();
+  app.appendChild(filterable);
+
   app.appendChild(buildFooter());
 }catch(err){
   app.innerHTML='<p style="font-family:var(--mono);color:#c00;padding:40px 0">Something went wrong rendering the dashboard:<br>'+err.message+'</p>';
