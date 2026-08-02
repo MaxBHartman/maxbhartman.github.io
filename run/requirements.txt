@@ -1,0 +1,4 @@
+requests
+# Optional, for the Geography section (offline reverse-geocoding of your GPS points):
+reverse_geocoder
+pycountry

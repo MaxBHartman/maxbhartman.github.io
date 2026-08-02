@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson-client/3.1.0/topojson-client.min.js"></script>
+<style>
+:root{
+  --bg:#ffffff; --ink:#171512; --muted:#8b867d; --faint:#e7e3db;
+  --line:#e7e3db; --accent:#fc4c02; --accent-soft:#ffd8c6; --panel:#faf8f4;
+  --mono:'Space Mono',ui-monospace,monospace; --sans:'Jost',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-weight:300;line-height:1.55;letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+a{color:inherit}
+.mono{font-family:var(--mono)}
+/* ---- section scaffolding ---- */
+section{padding:64px 0;border-top:1px solid var(--line)}
+section:first-of-type{border-top:none}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
+h2.section-title{font-weight:500;font-size:30px;letter-spacing:.02em;margin:0 0 2px;text-transform:uppercase}
+.section-sub{color:var(--muted);font-size:15px;font-style:italic;margin:0 0 34px;max-width:60ch}
+.chart-cap{color:var(--muted);font-size:13.5px;font-style:italic;margin:2px 0 16px}
+.chart-title{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;margin:0}
+/* ---- hero ---- */
+.hero{padding:96px 0 72px;text-align:center;border-top:none}
+.hero h1{font-weight:600;font-size:clamp(44px,9vw,104px);line-height:.92;letter-spacing:.01em;margin:0;text-transform:uppercase}
+.hero .sub{font-family:var(--mono);font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:18px 0 44px}
+.span-row{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-bottom:52px}
+.span-item{display:flex;flex-direction:column;align-items:center;line-height:1}
+.span-item .n{font-family:var(--mono);font-size:44px;font-weight:700}
+.span-item .l{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.tile{background:var(--bg);padding:26px 14px;text-align:center}
+.tile .n{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1}
+.tile .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:9px}
+/* ---- foreword ---- */
+.foreword p{font-size:18px;line-height:1.7;max-width:64ch;font-weight:300}
+.foreword .sig{font-family:var(--mono);font-size:13px;letter-spacing:.1em;color:var(--muted);margin-top:26px}
+/* ---- tabs / tables ---- */
+.tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:26px}
+.tab{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;padding:9px 15px;border:1px solid var(--line);background:var(--bg);color:var(--muted);cursor:pointer}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:400}
+td.rank{font-family:var(--mono);color:var(--accent);width:44px}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+tbody tr:hover{background:var(--panel)}
+/* ---- charts grid ---- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:44px 48px}
+.card.full{grid-column:1/-1}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.axis text{font-family:var(--mono);font-size:9.5px;fill:var(--muted)}
+.axis line,.axis path{stroke:var(--faint)}
+.bar{fill:var(--ink)}
+.bar.accent{fill:var(--accent)}
+.gridline{stroke:var(--faint);stroke-dasharray:2 3}
+.legend{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+.legend .sw{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:middle}
+.dot{fill:var(--accent);fill-opacity:.5}
+/* ---- geography ---- */
+.geo-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px 48px}
+.map-region{stroke:#fff;stroke-width:.4px}
+.tablewrap{max-height:420px;overflow:auto}
+.flag{font-family:var(--mono);color:var(--muted)}
+/* ---- calendar ---- */
+.cal-year{margin-bottom:30px}
+.cal-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+.cal-head .yr{font-family:var(--mono);font-weight:700;font-size:15px}
+.cal-head .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.cal-legend{display:flex;align-items:center;gap:6px;justify-content:flex-end;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:6px}
+.cal-legend i{width:11px;height:11px;display:inline-block;border-radius:2px}
+footer{border-top:1px solid var(--line);padding:40px 0 70px;color:var(--muted);font-size:12.5px;font-family:var(--mono);line-height:1.9}
+@media(max-width:760px){
+  .grid,.geo-grid{grid-template-columns:1fr;gap:40px}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .span-row{gap:24px}
+  section{padding:48px 0}
+}
+</style>
+</head>
+<body>
+<header class="site-nav">
+  <div class="wrap">
+    <span class="brand mono"><a href="../">MAX HARTMAN</a></span>
+    <nav class="links">
+      <a href="../work/">Work</a>
+      <a href="../research/">Research</a>
+      <a href="./" aria-current="page">Run</a>
+      <a href="../books/">Books</a>
+      <a href="../projects/">Projects</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="app"><p style="font-family:var(--mono);color:var(--muted);padding:60px 0">Loading data…</p></main>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+/* ============================ helpers ============================ */
+const D = window.STRAVA_DATA;
+const app = document.getElementById("app");
+const MI = "mi", FT = "ft";
+const fmtInt = n => Math.round(n).toLocaleString();
+const fmt1 = n => (Math.round(n*10)/10).toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1});
+const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
+function pace(sPerMi){ if(!sPerMi||!isFinite(sPerMi))return "—"; const m=Math.floor(sPerMi/60), s=Math.round(sPerMi%60); return `${m}:${String(s).padStart(2,"0")}`; }
+function hms(totalSec){ const h=Math.floor(totalSec/3600), m=Math.floor((totalSec%3600)/60); return h?`${h}:${String(m).padStart(2,"0")}`:`0:${String(m).padStart(2,"0")}`; }
+function pretty(t){ return t.replace(/([a-z])([A-Z])/g,"$1 $2"); }
+function isoLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+const acts = (D.activities||[]).filter(a=>a.date);
+acts.forEach(a=>{ a._d = new Date(a.datetime||a.date); a._dow = (a._d.getDay()+6)%7; a._hr = a._d.getHours(); });
+acts.sort((a,b)=> a.date<b.date?-1:1);
+const FOOT = new Set(["Run","TrailRun","Walk","Hike","VirtualRun"]);
+const footActs = acts.filter(a=>FOOT.has(a.type));
+const hasHR = acts.some(a=>a.avg_hr);
+const hasWeather = D.meta.has_weather && acts.some(a=>a.temp_f!=null);
+const hasGeo = D.meta.has_geo && acts.some(a=>a.country);
+
+/* daily totals + streaks */
+const dayMiles = new Map();
+acts.forEach(a=>dayMiles.set(a.date,(dayMiles.get(a.date)||0)+a.dist_mi));
+function computeStreaks(){
+  const days=[...dayMiles.keys()].sort();
+  let longest=0,cur=0,prev=null,lStart=null,lEnd=null,curStart=null;
+  for(const d of days){
+    const dt=new Date(d);
+    if(prev && (dt-prev)===86400000){ cur++; }
+    else { cur=1; curStart=d; }
+    if(cur>longest){ longest=cur; lStart=curStart; lEnd=d; }
+    prev=dt;
+  }
+  // current streak counted back from today/last day
+  let current=0; const last=days[days.length-1];
+  if(last){
+    const today=new Date(); today.setHours(0,0,0,0);
+    const lastD=new Date(last);
+    const gap=Math.round((today-lastD)/86400000);
+    if(gap<=1){ current=1; let walk=new Date(lastD);
+      while(true){ walk=new Date(walk-86400000); if(dayMiles.has(walk.toISOString().slice(0,10)))current++; else break; } }
+  }
+  return {longest,lStart,lEnd,current};
+}
+const streak=computeStreaks();
+
+/* ============================ generic SVG chart utils ============================ */
+function svg(w,h){ return d3.create("svg").attr("viewBox",`0 0 ${w} ${h}`).attr("preserveAspectRatio","xMidYMid meet"); }
+function mount(parent,node){ parent.appendChild(node); }
+
+function vbars(data,{w=560,h=280,mL=44,mR=8,mT=14,mB=34,fmtY=fmtInt,label,accentIdx=-1,rotate=false}={}){
+  const s=svg(w,h); const iw=w-mL-mR, ih=h-mT-mB;
+  const x=d3.scaleBand().domain(data.map(d=>d.k)).range([0,iw]).padding(0.18);
+  const y=d3.scaleLinear().domain([0,d3.max(data,d=>d.v)||1]).nice().range([ih,0]);
+  const g=s.append("g").attr("transform",`translate(${mL},${mT})`);
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(4).tickFormat(fmtY).tickSize(-iw))
+    .call(g=>g.selectAll(".tick line").attr("class","gridline")).call(g=>g.select(".domain").remove());
+  g.selectAll("rect.bar").data(data).join("rect").attr("class",(d,i)=>"bar"+(i===accentIdx?" accent":""))
+    .attr("x",d=>x(d.k)).attr("y",d=>y(d.v)).attr("width",x.bandwidth()).attr("height",d=>ih-y(d.v));
+  const ax=g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickSize(0).tickPadding(8));
+  ax.select(".domain").remove();
+  if(rotate) ax.selectAll("text").attr("transform","rotate(-40)").attr("text-anchor","end").attr("dx","-4").attr("dy","6");
+  return s.node();
+}
+function donut(data,{w=560,h=280,colors}={}){
+  const s=svg(w,h); const r=Math.min(w*0.42,h*0.46), cx=h*0.6, cy=h/2;
+  const g=s.append("g").attr("transform",`translate(${cx},${cy})`);
+  const pie=d3.pie().sort(null).value(d=>d.v)(data);
+  const arc=d3.arc().innerRadius(r*0.58).outerRadius(r);
+  g.selectAll("path").data(pie).join("path").attr("d",arc).attr("fill",(d,i)=>colors[i%colors.length]);
+  const total=d3.sum(data,d=>d.v);
+  // legend
+  const lg=s.append("g").attr("transform",`translate(${cx+r+24},${cy-data.length*11})`);
+  data.forEach((d,i)=>{
+    const row=lg.append("g").attr("transform",`translate(0,${i*22})`);
+    row.append("rect").attr("width",11).attr("height",11).attr("y",-9).attr("fill",colors[i%colors.length]);
+    row.append("text").attr("x",18).attr("font-family","var(--mono)").attr("font-size",12).attr("fill","var(--ink)")
+      .text(`${d.k}`);
+    row.append("text").attr("x",18).attr("y",15).attr("font-family","var(--mono)").attr("font-size",10.5).attr("fill","var(--muted)")
+      .text(`${fmtInt(d.v)} · ${Math.round(d.v/total*100)}%`);
+  });
+  return s.node();
+}
+function scatter(pts,{w=560,h=300,mL=48,mR=10,mT=12,mB=40,xLabel,yLabel,xDom,yDom,fmtX,fmtY}={}){
+  const s=svg(w,h); const iw=w-mL-mR, ih=h-mT-mB;
+  const x=d3.scaleLinear().domain(xDom).range([0,iw]);
+  const y=d3.scaleLinear().domain(yDom).range([ih,0]);
+  const g=s.append("g").attr("transform",`translate(${mL},${mT})`);
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtY).tickSize(-iw))
+    .call(g=>g.selectAll(".tick line").attr("class","gridline")).call(g=>g.select(".domain").remove());
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).ticks(6).tickFormat(fmtX));
+  g.selectAll("circle").data(pts).join("circle").attr("class","dot").attr("r",2.2).attr("cx",d=>x(d.x)).attr("cy",d=>y(d.y));
+  s.append("text").attr("x",mL+iw/2).attr("y",h-4).attr("text-anchor","middle").attr("font-family","var(--mono)").attr("font-size",10).attr("fill","var(--muted)").text(xLabel);
+  s.append("text").attr("transform",`rotate(-90)`).attr("x",-(mT+ih/2)).attr("y",12).attr("text-anchor","middle").attr("font-family","var(--mono)").attr("font-size",10).attr("fill","var(--muted)").text(yLabel);
+  return s.node();
+}
+function hbars(data,{w=560,rowH=30,mL=120,mR=48,fmtV=fmtInt,accent}={}){
+  const h=data.length*rowH+10; const s=svg(w,h); const iw=w-mL-mR;
+  const x=d3.scaleLinear().domain([0,d3.max(data,d=>d.v)||1]).range([0,iw]);
+  const g=s.append("g").attr("transform",`translate(${mL},8)`);
+  const rows=g.selectAll("g").data(data).join("g").attr("transform",(d,i)=>`translate(0,${i*rowH})`);
+  rows.append("text").attr("x",-10).attr("y",rowH/2).attr("dy",".32em").attr("text-anchor","end")
+    .attr("font-family","var(--mono)").attr("font-size",11.5).attr("fill","var(--ink)").text(d=>d.k);
+  rows.append("rect").attr("y",rowH/2-8).attr("height",16).attr("width",d=>Math.max(1,x(d.v))).attr("fill",(d,i)=>accent&&i===0?"var(--accent)":"var(--ink)");
+  rows.append("text").attr("x",d=>x(d.v)+8).attr("y",rowH/2).attr("dy",".32em").attr("font-family","var(--mono)").attr("font-size",10.5).attr("fill","var(--muted)").text(d=>fmtV(d.v));
+  return s.node();
+}
+
+/* ============================ builders ============================ */
+function buildHero(){
+  const first=acts[0].date, last=acts[acts.length-1].date;
+  const d0=new Date(first), d1=new Date();
+  let y=d1.getFullYear()-d0.getFullYear(), m=d1.getMonth()-d0.getMonth(), dd=d1.getDate()-d0.getDate();
+  if(dd<0){ m--; dd+=new Date(d1.getFullYear(),d1.getMonth(),0).getDate(); }
+  if(m<0){ y--; m+=12; }
+  const totMi=d3.sum(acts,a=>a.dist_mi), totSec=d3.sum(acts,a=>a.moving_s), totFt=d3.sum(acts,a=>a.elev_ft);
+  const name=(D.meta.athlete_name||"").trim();
+  const title = name ? (name.split(" ")[0].toUpperCase()+"’S LOG") : "TRAINING LOG";
+
+  const sec=el("section","hero");
+  sec.appendChild(el("h1",null,title));
+  sec.appendChild(el("p","sub",`every activity from ${MONTHS[d0.getMonth()]} ${d0.getDate()}, ${d0.getFullYear()} to today`));
+  const span=el("div","span-row");
+  [[y,"years"],[m,"months"],[dd,"days"]].forEach(([n,l])=>{
+    const it=el("div","span-item"); it.appendChild(el("div","n",n)); it.appendChild(el("div","l",l)); span.appendChild(it);
+  });
+  sec.appendChild(span);
+  const tiles=el("div","tiles");
+  [[fmtInt(acts.length),"activities"],[fmtInt(totMi),"miles"],[fmtInt(totSec/3600),"hours"],[fmtInt(totFt/1000)+"k","ft climbed"]]
+    .forEach(([n,l])=>{ const t=el("div","tile"); t.appendChild(el("div","n",n)); t.appendChild(el("div","l",l)); tiles.appendChild(t); });
+  sec.appendChild(tiles);
+  // streak line
+  const sline=el("p","sub"); sline.style.marginTop="30px";
+  sline.innerHTML=`longest streak <b class="mono" style="color:var(--accent)">${streak.longest}</b> days &nbsp;·&nbsp; current streak <b class="mono" style="color:var(--accent)">${streak.current}</b> days`;
+  sec.appendChild(sline);
+  return sec;
+}
+
+function sectionShell(eyebrow,title,sub){
+  const s=el("section");
+  s.appendChild(el("p","eyebrow",eyebrow));
+  s.appendChild(el("h2","section-title",title));
+  if(sub)s.appendChild(el("p","section-sub",sub));
+  return s;
+}
+function chartCard(title,cap,node,full){
+  const c=el("div","card"+(full?" full":""));
+  c.appendChild(el("p","chart-title",title));
+  if(cap)c.appendChild(el("p","chart-cap",cap));
+  c.appendChild(node);
+  return c;
+}
+
+function buildForeword(){
+  const s=sectionShell("Foreword","In their own words","");
+  const fw=el("div","foreword");
+  // EDIT THIS: write your own story between the <p> tags below.
+  fw.innerHTML=`
+    <p>This is your space. Replace this paragraph in <span class="mono">index.html</span>
+    (search for “EDIT THIS”) with the story behind your training — how it started, what
+    keeps you going, the runs and rides you’ll never forget.</p>
+    <p>Everything below is generated straight from your Strava history. The more you log,
+    the richer it gets.</p>
+    <div class="sig">— ${ (D.meta.athlete_name||"You") }</div>`;
+  s.appendChild(fw);
+  return s;
+}
+
+function buildNotable(){
+  const s=sectionShell("Notable","Notable activities","the extremes of the dataset — longest, fastest, steepest, and races");
+  const tabs=el("div","tabs"); const body=el("div");
+  const standards=[["1 mi",1],["5K",3.107],["10K",6.214],["Half",13.109],["Marathon",26.219]];
+  const views={
+    "Longest":()=>tableOf(["#","Date","Type","Distance"],
+      [...acts].sort((a,b)=>b.dist_mi-a.dist_mi).slice(0,10)
+        .map((a,i)=>[i+1,a.date,pretty(a.type),fmt1(a.dist_mi)+" "+MI])),
+    "Personal Bests":()=>{
+      const rows=[];
+      standards.forEach(([lbl,dist])=>{
+        const cand=footActs.filter(a=>a.pace_s_per_mi && a.dist_mi>=dist*0.97);
+        if(!cand.length)return;
+        const best=cand.reduce((m,a)=>a.pace_s_per_mi<m.pace_s_per_mi?a:m);
+        rows.push([lbl,best.date,pace(best.pace_s_per_mi)+" /mi",hms(best.pace_s_per_mi*dist)]);
+      });
+      return tableOf(["Distance","Date","Pace","Best time"],rows);
+    },
+    "Elevation":()=>tableOf(["#","Date","Type","Gain"],
+      [...acts].sort((a,b)=>b.elev_ft-a.elev_ft).slice(0,10)
+        .map((a,i)=>[i+1,a.date,pretty(a.type),fmtInt(a.elev_ft)+" "+FT])),
+    "Races":()=>{
+      const r=acts.filter(a=>a.race).sort((a,b)=>b.date<a.date?-1:1).slice(0,15);
+      return r.length?tableOf(["Date","Type","Distance","Time"],
+        r.map(a=>[a.date,pretty(a.type),fmt1(a.dist_mi)+" "+MI,hms(a.moving_s)]))
+        : el("p","chart-cap","No activities are tagged as races in your Strava data.");
+    }
+  };
+  function tableOf(head,rows){
+    if(!rows.length)return el("p","chart-cap","Not enough data yet.");
+    const t=el("table"); const thead=el("thead"); const tr=el("tr");
+    head.forEach((h,i)=>{ const th=el("th",i>=head.length-1?"num":null,h); tr.appendChild(th); }); thead.appendChild(tr); t.appendChild(thead);
+    const tb=el("tbody");
+    rows.forEach(r=>{ const row=el("tr");
+      r.forEach((c,i)=>{ const isRank=(head[0]==="#"&&i===0); const isNum=(i>=r.length-1);
+        const td=el("td",isRank?"rank":(isNum?"num":null),String(c)); row.appendChild(td); });
+      tb.appendChild(row); });
+    t.appendChild(tb); return t;
+  }
+  const keys=Object.keys(views);
+  keys.forEach((k,i)=>{
+    const b=el("button","tab"+(i===0?" active":""),k);
+    b.onclick=()=>{ [...tabs.children].forEach(c=>c.classList.remove("active")); b.classList.add("active");
+      body.innerHTML=""; body.appendChild(views[k]()); };
+    tabs.appendChild(b);
+  });
+  body.appendChild(views[keys[0]]());
+  s.appendChild(tabs); s.appendChild(body);
+  return s;
+}
+
+function buildStats(){
+  const s=sectionShell("Statistics","The numbers","patterns across every logged activity");
+  const grid=el("div","grid"); s.appendChild(grid);
+  const ORANGES=["#fc4c02","#ff7a45","#ffa06b","#ffc39c","#ffe0cd","#171512","#5b5750"];
+
+  // activity type breakdown
+  const byType=d3.rollups(acts,v=>v.length,a=>pretty(a.type)).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+  grid.appendChild(chartCard("Activity types","what you spend your time doing",donut(byType.slice(0,6),{colors:ORANGES})));
+
+  // annual mileage
+  const byYear=d3.rollups(acts,v=>d3.sum(v,a=>a.dist_mi),a=>a.date.slice(0,4)).map(([k,v])=>({k,v})).sort((a,b)=>a.k<b.k?-1:1);
+  grid.appendChild(chartCard("Annual mileage","total distance per calendar year",vbars(byYear,{fmtY:fmtInt})));
+
+  // by hour
+  const byHour=d3.range(24).map(h=>({k:(h%3===0?(h===0?"12a":h<12?h+"a":h===12?"12p":(h-12)+"p"):""),_h:h,
+     v:acts.filter(a=>a._hr===h).length}));
+  grid.appendChild(chartCard("Activity by start time","when you head out the door",vbars(byHour,{fmtY:fmtInt})));
+
+  // avg daily miles by weekday
+  const wk=DOW.map((d,i)=>{ const list=acts.filter(a=>a._dow===i); const days=new Set(list.map(a=>a.date)).size||1;
+     return {k:d,v:d3.sum(list,a=>a.dist_mi)/days}; });
+  grid.appendChild(chartCard("Avg miles by weekday","mileage per active day of week",vbars(wk,{fmtY:v=>fmt1(v)})));
+
+  // distance buckets
+  const buckets=[["<1",0,1],["1-2",1,2],["2-3",2,3],["3-4",3,4],["4-6",4,6],["6-8",6,8],["8-10",8,10],["10-13",10,13],["13-18",13,18],["18-26",18,26.2],["26+",26.2,1e9]];
+  const distB=buckets.map(([lbl,lo,hi])=>({k:lbl,v:footActs.filter(a=>a.dist_mi>=lo&&a.dist_mi<hi).length})).filter(b=>b.v>0);
+  grid.appendChild(chartCard("Run distances","how far your foot activities go",vbars(distB,{fmtY:fmtInt,rotate:true}),true));
+
+  // indoor vs outdoor
+  const indoor=acts.filter(a=>a.trainer).length, outdoor=acts.length-indoor;
+  grid.appendChild(chartCard("Indoor vs outdoor","trainer / treadmill sessions vs the real world",
+    donut([{k:"Outdoor",v:outdoor},{k:"Indoor",v:indoor}],{colors:["#171512","#fc4c02"]})));
+
+  // pace distribution
+  if(footActs.some(a=>a.pace_s_per_mi)){
+    const paces=footActs.map(a=>a.pace_s_per_mi).filter(Boolean);
+    const lo=Math.floor(d3.min(paces)/60), hi=Math.ceil(d3.max(paces)/60);
+    const bins=d3.range(lo,hi+1).map(m=>({k:(m%2===0?m+"′":""),_m:m,v:paces.filter(p=>p>=m*60&&p<(m+1)*60).length}));
+    const mean=d3.mean(paces);
+    grid.appendChild(chartCard("Pace distribution",`mean ${pace(mean)} /mi · median ${pace(d3.median(paces))} /mi`,vbars(bins,{fmtY:fmtInt})));
+  }
+
+  // HR zones
+  if(hasHR){
+    const zones=[["Recovery","<120",0,120],["Easy","120-140",120,140],["Tempo","140-160",140,160],["Threshold",">160",160,300]];
+    const z=zones.map(([n,lbl,lo,hi])=>({k:n,v:acts.filter(a=>a.avg_hr&&a.avg_hr>=lo&&a.avg_hr<hi).length}));
+    grid.appendChild(chartCard("Heart-rate zones","activities grouped by average heart rate",vbars(z,{fmtY:fmtInt})));
+    // pace vs hr
+    const pts=footActs.filter(a=>a.avg_hr&&a.pace_s_per_mi).map(a=>({x:a.avg_hr,y:a.pace_s_per_mi}));
+    if(pts.length>5){
+      grid.appendChild(chartCard("Pace vs heart rate","each dot is one activity",
+        scatter(pts,{xDom:[d3.min(pts,p=>p.x)-5,d3.max(pts,p=>p.x)+5],yDom:[d3.min(pts,p=>p.y)-20,d3.max(pts,p=>p.y)+20],
+          xLabel:"avg heart rate (bpm)",yLabel:"pace (min/mi)",fmtX:d=>d,fmtY:d=>pace(d)}),true));
+    }
+  }
+
+  // weather
+  if(hasWeather){
+    const tbins=[["<20",-99,20],["20s",20,30],["30s",30,40],["40s",40,50],["50s",50,60],["60s",60,70],["70s",70,80],["80s",80,90],["90+",90,999]];
+    const tb=tbins.map(([lbl,lo,hi])=>({k:lbl+"°",v:acts.filter(a=>a.temp_f!=null&&a.temp_f>=lo&&a.temp_f<hi).length})).filter(b=>b.v>0);
+    grid.appendChild(chartCard("Temperature","the mercury when you set out",vbars(tb,{fmtY:fmtInt,rotate:true})));
+    const cond=d3.rollups(acts.filter(a=>a.condition),v=>v.length,a=>a.condition).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+    grid.appendChild(chartCard("Weather conditions","rain or shine",hbars(cond,{accent:true})));
+  }
+  return s;
+}
+
+function buildGeography(){
+  const s=sectionShell("Geography","Where you go","every place your GPS has taken you");
+  const grid=el("div","geo-grid"); s.appendChild(grid);
+
+  const byCountry=d3.rollups(acts.filter(a=>a.country),
+     v=>({days:new Set(v.map(a=>a.date)).size,mi:d3.sum(v,a=>a.dist_mi)}),a=>a.country)
+     .map(([k,o])=>({k,...o})).sort((a,b)=>b.mi-a.mi);
+  const byState=d3.rollups(acts.filter(a=>a.us_state),
+     v=>({days:new Set(v.map(a=>a.date)).size,mi:d3.sum(v,a=>a.dist_mi)}),a=>a.us_state)
+     .map(([k,o])=>({k,...o})).sort((a,b)=>b.mi-a.mi);
+
+  function geoTable(title,rows){
+    const c=el("div","card"); c.appendChild(el("p","chart-title",title));
+    const wrap=el("div","tablewrap"); const t=el("table");
+    t.innerHTML=`<thead><tr><th>${title.includes("Countries")?"Country":"State"}</th><th class="num">Days</th><th class="num">Miles</th></tr></thead>`;
+    const tb=el("tbody");
+    rows.forEach(r=>{ const tr=el("tr");
+      tr.appendChild(el("td",null,r.k));
+      tr.appendChild(el("td","num",fmtInt(r.days)));
+      tr.appendChild(el("td","num",fmt1(r.mi)));
+      tb.appendChild(tr); });
+    t.appendChild(tb); wrap.appendChild(t); c.appendChild(wrap); return c;
+  }
+  const worldCard=el("div","card"); worldCard.appendChild(el("p","chart-title","Countries visited"));
+  const worldHost=el("div"); worldCard.appendChild(worldHost);
+  const usCard=el("div","card"); usCard.appendChild(el("p","chart-title","US states visited"));
+  const usHost=el("div"); usCard.appendChild(usHost);
+
+  grid.appendChild(worldCard);
+  grid.appendChild(geoTable("Countries",byCountry));
+  if(byState.length){ grid.appendChild(usCard); grid.appendChild(geoTable("US states",byState)); }
+
+  drawWorld(worldHost,new Map(byCountry.map(d=>[normName(d.k),d.mi])));
+  if(byState.length) drawUS(usHost,new Map(byState.map(d=>[d.k,d.mi])));
+  return s;
+}
+
+/* --- maps (topojson from CDN; degrade gracefully) --- */
+const COUNTRY_ALIAS={"united states":"united states of america","russia":"russia","south korea":"south korea",
+  "north korea":"north korea","czechia":"czech republic","bosnia and herzegovina":"bosnia and herz.","tanzania":"tanzania"};
+function normName(n){ n=(n||"").toLowerCase().trim(); return COUNTRY_ALIAS[n]||n; }
+function paint(host,geojson,keyFn,valMap,{w=560,h=340,fit}){
+  const s=svg(w,h); const proj=fit(d3.geoMercator(),geojson); const path=d3.geoPath(proj);
+  const vals=[...valMap.values()]; const max=d3.max(vals)||1;
+  const color=d3.scaleSequential().domain([0,Math.sqrt(max)]).interpolator(t=>d3.interpolate("#ffe0cd","#fc4c02")(t));
+  s.append("g").selectAll("path").data(geojson.features).join("path").attr("class","map-region").attr("d",path)
+    .attr("fill",f=>{ const v=valMap.get(keyFn(f)); return v?color(Math.sqrt(v)):"#f0ece4"; })
+    .append("title").text(f=>{ const v=valMap.get(keyFn(f)); return keyFn(f)+(v?`: ${fmt1(v)} mi`:""); });
+  host.appendChild(s.node());
+}
+function drawWorld(host,valMap){
+  d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(topo=>{
+    const geo=topojson.feature(topo,topo.objects.countries);
+    paint(host,geo,f=>normName(f.properties.name),valMap,{h:320,
+      fit:(p,g)=>p.fitExtent([[4,4],[556,316]],g)});
+  }).catch(()=>host.appendChild(el("p","chart-cap","Map needs internet to load; the table above still works.")));
+}
+const FIPS={"01":"Alabama","02":"Alaska","04":"Arizona","05":"Arkansas","06":"California","08":"Colorado","09":"Connecticut","10":"Delaware","11":"District of Columbia","12":"Florida","13":"Georgia","15":"Hawaii","16":"Idaho","17":"Illinois","18":"Indiana","19":"Iowa","20":"Kansas","21":"Kentucky","22":"Louisiana","23":"Maine","24":"Maryland","25":"Massachusetts","26":"Michigan","27":"Minnesota","28":"Mississippi","29":"Missouri","30":"Montana","31":"Nebraska","32":"Nevada","33":"New Hampshire","34":"New Jersey","35":"New Mexico","36":"New York","37":"North Carolina","38":"North Dakota","39":"Ohio","40":"Oklahoma","41":"Oregon","42":"Pennsylvania","44":"Rhode Island","45":"South Carolina","46":"South Dakota","47":"Tennessee","48":"Texas","49":"Utah","50":"Vermont","51":"Virginia","53":"Washington","54":"West Virginia","55":"Wisconsin","56":"Wyoming","72":"Puerto Rico"};
+function drawUS(host,valMap){
+  d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(topo=>{
+    const geo=topojson.feature(topo,topo.objects.states);
+    const s=svg(560,340); const proj=d3.geoAlbersUsa().fitExtent([[4,4],[556,336]],geo); const path=d3.geoPath(proj);
+    const max=d3.max([...valMap.values()])||1;
+    const color=t=>d3.interpolate("#ffe0cd","#fc4c02")(t);
+    s.append("g").selectAll("path").data(geo.features).join("path").attr("class","map-region").attr("d",path)
+      .attr("fill",f=>{ const name=(f.properties&&f.properties.name)||FIPS[f.id]; const v=valMap.get(name);
+        return v?color(Math.sqrt(v)/Math.sqrt(max)):"#f0ece4"; })
+      .append("title").text(f=>{ const name=(f.properties&&f.properties.name)||FIPS[f.id]; const v=valMap.get(name); return name+(v?`: ${fmt1(v)} mi`:""); });
+    host.appendChild(s.node());
+  }).catch(()=>host.appendChild(el("p","chart-cap","Map needs internet to load; the table above still works.")));
+}
+
+/* --- daily log calendars --- */
+function buildCalendar(){
+  const s=sectionShell("Daily log","Every day","one square per day, shaded by distance");
+  const years=[...new Set(acts.map(a=>+a.date.slice(0,4)))].sort((a,b)=>b-a);
+  const allMiles=[...dayMiles.values()].filter(v=>v>0).sort(d3.ascending);
+  const q=p=>d3.quantileSorted(allMiles,p)||0;
+  const thresholds=[q(.25),q(.5),q(.75),q(.9)];
+  const shades=["#f0ece4","#ffd8c6","#ffab86","#ff7a45","#fc4c02"];
+  function shade(v){ if(!v)return shades[0]; for(let i=0;i<thresholds.length;i++) if(v<=thresholds[i])return shades[i+ (i===0?0:0)]||shades[i+1]; return shades[4]; }
+  // simpler: map v to bucket
+  function shadeBucket(v){ if(!v)return shades[0]; if(v<=thresholds[1])return shades[1]; if(v<=thresholds[2])return shades[2]; if(v<=thresholds[3])return shades[3]; return shades[4]; }
+
+  years.forEach(yr=>{
+    const list=acts.filter(a=>+a.date.slice(0,4)===yr);
+    const yrMi=d3.sum(list,a=>a.dist_mi), activeDays=new Set(list.map(a=>a.date)).size;
+    const box=el("div","cal-year");
+    const head=el("div","cal-head");
+    head.appendChild(el("div","yr",yr));
+    head.appendChild(el("div","meta",`${fmtInt(yrMi)} mi · ${activeDays} active days · avg ${fmt1(yrMi/365)}/day`));
+    box.appendChild(head);
+
+    const cell=12,gap=3,top=16,left=26;
+    const jan1=new Date(yr,0,1), dec31=new Date(yr,11,31);
+    const gridStart=new Date(jan1); gridStart.setDate(jan1.getDate()-((jan1.getDay()+6)%7)); // back to Monday
+    const totalDays=Math.round((dec31-gridStart)/86400000)+1;
+    const weeks=Math.ceil(totalDays/7);
+    const W=left+weeks*(cell+gap)+4, H=top+7*(cell+gap);
+    const s2=svg(W,H); s2.attr("style","max-width:"+W+"px");
+    // weekday labels
+    ["Mon","","Wed","","Fri","","Sun"].forEach((d,i)=>{ if(d)s2.append("text").attr("x",0).attr("y",top+i*(cell+gap)+cell).attr("font-family","var(--mono)").attr("font-size",8).attr("fill","var(--muted)").text(d); });
+    let lastMonth=-1;
+    for(let i=0;i<totalDays;i++){
+      const d=new Date(gridStart); d.setDate(gridStart.getDate()+i);
+      if(d<jan1||d>dec31)continue;
+      const col=Math.floor(i/7), row=(d.getDay()+6)%7;
+      const iso=isoLocal(d); const v=dayMiles.get(iso)||0;
+      s2.append("rect").attr("x",left+col*(cell+gap)).attr("y",top+row*(cell+gap)).attr("width",cell).attr("height",cell)
+        .attr("rx",2).attr("fill",shadeBucket(v))
+        .append("title").text(`${iso}: ${v?fmt1(v)+" mi":"rest"}`);
+      if(d.getMonth()!==lastMonth && d.getDate()<=7){ lastMonth=d.getMonth();
+        s2.append("text").attr("x",left+col*(cell+gap)).attr("y",10).attr("font-family","var(--mono)").attr("font-size",8.5).attr("fill","var(--muted)").text(MONTHS[d.getMonth()]); }
+    }
+    box.appendChild(s2.node());
+    s.appendChild(box);
+  });
+  // legend
+  const lg=el("div","cal-legend"); lg.appendChild(el("span",null,"less"));
+  shades.forEach(c=>{ const i=el("i"); i.style.background=c; lg.appendChild(i); }); lg.appendChild(el("span",null,"more"));
+  s.appendChild(lg);
+  return s;
+}
+
+function buildFooter(){
+  const f=el("footer");
+  const when=new Date(D.meta.generated_at||Date.now()).toLocaleDateString();
+  f.innerHTML=`Generated ${when} from Strava${D.meta.demo?" · DEMO DATA":""}.<br>`+
+    `Design after nodaysoff.run by Adrien Friggeri · built with your own data.<br>`+
+    `Maps © Natural Earth via world-atlas / us-atlas · Fonts: Jost, Space Mono.`;
+  return f;
+}
+
+/* ============================ render ============================ */
+try{
+  app.innerHTML="";
+  app.appendChild(buildHero());
+  app.appendChild(buildForeword());
+  app.appendChild(buildNotable());
+  app.appendChild(buildStats());
+  if(hasGeo) app.appendChild(buildGeography());
+  app.appendChild(buildCalendar());
+  app.appendChild(buildFooter());
+}catch(err){
+  app.innerHTML='<p style="font-family:var(--mono);color:#c00;padding:40px 0">Something went wrong rendering the dashboard:<br>'+err.message+'</p>';
+  console.error(err);
+}
+</script>
+</body>
+</html>

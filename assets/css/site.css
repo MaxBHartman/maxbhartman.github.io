@@ -1,0 +1,120 @@
+/* Shared design system — derived from the /run dashboard's look.
+   Fonts: Jost (body) + Space Mono (labels/numbers). Cream/ink palette,
+   thin-rule sections, uppercase mono "eyebrow" labels. */
+
+:root {
+  --bg: #ffffff;
+  --ink: #171512;
+  --muted: #8b867d;
+  --faint: #e7e3db;
+  --line: #e7e3db;
+  --panel: #faf8f4;
+  --accent: #5b5750; /* neutral site-wide accent; /run keeps its own orange */
+  --mono: 'Space Mono', ui-monospace, monospace;
+  --sans: 'Jost', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: .01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration-color: var(--faint); text-underline-offset: 3px; }
+a:hover { text-decoration-color: currentColor; }
+
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+.mono { font-family: var(--mono); }
+
+/* ---- site nav ---- */
+.site-nav {
+  border-bottom: 1px solid var(--line);
+  padding: 22px 0;
+}
+.site-nav .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.site-nav .brand {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .08em;
+  font-weight: 700;
+}
+.site-nav .links { display: flex; gap: 22px; flex-wrap: wrap; }
+.site-nav .links a {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.site-nav .links a:hover,
+.site-nav .links a[aria-current="page"] { color: var(--ink); }
+
+/* ---- section scaffolding ---- */
+section { padding: 56px 0; border-top: 1px solid var(--line); }
+section:first-of-type { border-top: none; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 4px;
+}
+.section-title { font-weight: 500; font-size: 26px; letter-spacing: .02em; margin: 0 0 2px; text-transform: uppercase; }
+.section-sub { color: var(--muted); font-size: 15px; font-style: italic; margin: 0 0 30px; max-width: 60ch; }
+
+/* ---- hero (landing page) ---- */
+.hero { padding: 88px 0 56px; border-top: none; }
+.hero h1 { font-weight: 600; font-size: clamp(36px, 8vw, 60px); line-height: 1.05; letter-spacing: .01em; margin: 0 0 18px; }
+.hero .tagline { font-family: var(--mono); font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin: 0 0 28px; }
+.hero p.bio { font-size: 17px; line-height: 1.7; max-width: 62ch; font-weight: 300; margin: 0 0 28px; }
+.link-row { display: flex; flex-wrap: wrap; gap: 10px 20px; font-family: var(--mono); font-size: 12.5px; }
+.link-row a { color: var(--ink); border-bottom: 1px solid var(--faint); padding-bottom: 1px; }
+.link-row a:hover { border-color: var(--ink); }
+
+/* ---- lists (research, books, projects, experience) ---- */
+.entry-list { display: flex; flex-direction: column; gap: 28px; }
+.entry {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 4px 20px;
+}
+.entry .when { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 3px; }
+.entry .what h3 { margin: 0; font-size: 17px; font-weight: 500; }
+.entry .what .meta { color: var(--muted); font-size: 13.5px; margin: 4px 0 0; }
+.entry .what .links { margin-top: 6px; font-family: var(--mono); font-size: 11.5px; display: flex; gap: 14px; flex-wrap: wrap; }
+.entry .what .links a { color: var(--accent); }
+
+/* ---- project / card grid ---- */
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.project-card { border: 1px solid var(--line); padding: 22px; }
+.project-card h3 { margin: 0 0 8px; font-size: 17px; font-weight: 500; }
+.project-card p { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+.project-card a.open { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+
+.empty-state { color: var(--muted); font-style: italic; font-size: 15px; }
+
+footer.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 32px 0 64px;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--mono);
+  line-height: 1.8;
+}
+
+@media (max-width: 700px) {
+  section { padding: 40px 0; }
+  .entry { grid-template-columns: 1fr; gap: 4px; }
+  .entry .when { padding-top: 0; }
+  .card-grid { grid-template-columns: 1fr; }
+  .site-nav .links { gap: 14px 18px; }
+}
