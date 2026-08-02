@@ -306,11 +306,7 @@ function buildForeword(){
   const fw=el("div","foreword");
   // EDIT THIS: write your own story between the <p> tags below.
   fw.innerHTML=`
-    <p>This is your space. Replace this paragraph in <span class="mono">index.html</span>
-    (search for “EDIT THIS”) with the story behind your training — how it started, what
-    keeps you going, the runs and rides you’ll never forget.</p>
-    <p>Everything below is generated straight from your Strava history. The more you log,
-    the richer it gets.</p>
+    <p>I created this small tool to visualize my running progress since I started running. </p>
     <div class="sig">— ${ (D.meta.athlete_name||"You") }</div>`;
   s.appendChild(fw);
   return s;
@@ -394,7 +390,7 @@ function buildStats(){
 
   // activity type breakdown
   const byType=d3.rollups(acts,v=>v.length,a=>pretty(a.type)).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
-  grid.appendChild(chartCard("Activity types","what you spend your time doing",donut(byType.slice(0,6),{colors:ORANGES})));
+  grid.appendChild(chartCard("Activity types",donut(byType.slice(0,6),{colors:ORANGES})));
 
   // annual mileage
   const byYear=d3.rollups(acts,v=>d3.sum(v,a=>a.dist_mi),a=>a.date.slice(0,4)).map(([k,v])=>({k,v})).sort((a,b)=>a.k<b.k?-1:1);
@@ -403,7 +399,7 @@ function buildStats(){
   // by hour
   const byHour=d3.range(24).map(h=>({k:(h%3===0?(h===0?"12a":h<12?h+"a":h===12?"12p":(h-12)+"p"):""),_h:h,
      v:acts.filter(a=>a._hr===h).length}));
-  grid.appendChild(chartCard("Activity by start time","when you head out the door",vbars(byHour,{fmtY:fmtInt})));
+  grid.appendChild(chartCard("Activity by start time",vbars(byHour,{fmtY:fmtInt})));
 
   // avg daily miles by weekday
   const wk=DOW.map((d,i)=>{ const list=acts.filter(a=>a._dow===i); const days=new Set(list.map(a=>a.date)).size||1;
@@ -413,7 +409,7 @@ function buildStats(){
   // distance buckets
   const buckets=[["<1",0,1],["1-2",1,2],["2-3",2,3],["3-4",3,4],["4-6",4,6],["6-8",6,8],["8-10",8,10],["10-13",10,13],["13-18",13,18],["18-26",18,26.2],["26+",26.2,1e9]];
   const distB=buckets.map(([lbl,lo,hi])=>({k:lbl,v:footActs.filter(a=>a.dist_mi>=lo&&a.dist_mi<hi).length})).filter(b=>b.v>0);
-  grid.appendChild(chartCard("Run distances","how far your foot activities go",vbars(distB,{fmtY:fmtInt,rotate:true}),true));
+  grid.appendChild(chartCard("Run distances",vbars(distB,{fmtY:fmtInt,rotate:true}),true));
 
   // indoor vs outdoor
   const indoor=acts.filter(a=>a.trainer).length, outdoor=acts.length-indoor;
@@ -455,7 +451,7 @@ function buildStats(){
   if(hasWeather){
     const tbins=[["<20",-99,20],["20s",20,30],["30s",30,40],["40s",40,50],["50s",50,60],["60s",60,70],["70s",70,80],["80s",80,90],["90+",90,999]];
     const tb=tbins.map(([lbl,lo,hi])=>({k:lbl+"°",v:acts.filter(a=>a.temp_f!=null&&a.temp_f>=lo&&a.temp_f<hi).length})).filter(b=>b.v>0);
-    grid.appendChild(chartCard("Temperature","the mercury when you set out",vbars(tb,{fmtY:fmtInt,rotate:true})));
+    grid.appendChild(chartCard("Temperature",vbars(tb,{fmtY:fmtInt,rotate:true})));
     const cond=d3.rollups(acts.filter(a=>a.condition),v=>v.length,a=>a.condition).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
     grid.appendChild(chartCard("Weather conditions","rain or shine",hbars(cond,{accent:true})));
   }
@@ -463,7 +459,7 @@ function buildStats(){
 }
 
 function buildGeography(){
-  const s=sectionShell("Geography","Where you go","every place your GPS has taken you");
+  const s=sectionShell("Geography");
   const grid=el("div","geo-grid"); s.appendChild(grid);
 
   const byCountry=d3.rollups(acts.filter(a=>a.country),
@@ -590,8 +586,7 @@ function buildFooter(){
   const f=el("footer");
   const when=new Date(D.meta.generated_at||Date.now()).toLocaleDateString();
   f.innerHTML=`Generated ${when} from Strava${D.meta.demo?" · DEMO DATA":""}.<br>`+
-    `Design after nodaysoff.run by Adrien Friggeri · built with your own data.<br>`+
-    `Maps © Natural Earth via world-atlas / us-atlas · Fonts: Jost, Space Mono.`;
+    `Design inspired by nodaysoff.run by Adrien Friggeri<br>`;
   return f;
 }
 
