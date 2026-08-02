@@ -390,7 +390,7 @@ function buildStats(){
 
   // activity type breakdown
   const byType=d3.rollups(acts,v=>v.length,a=>pretty(a.type)).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
-  grid.appendChild(chartCard("Activity types",donut(byType.slice(0,6),{colors:ORANGES})));
+  grid.appendChild(chartCard("Activity types",null,donut(byType.slice(0,6),{colors:ORANGES})));
 
   // annual mileage
   const byYear=d3.rollups(acts,v=>d3.sum(v,a=>a.dist_mi),a=>a.date.slice(0,4)).map(([k,v])=>({k,v})).sort((a,b)=>a.k<b.k?-1:1);
@@ -399,7 +399,7 @@ function buildStats(){
   // by hour
   const byHour=d3.range(24).map(h=>({k:(h%3===0?(h===0?"12a":h<12?h+"a":h===12?"12p":(h-12)+"p"):""),_h:h,
      v:acts.filter(a=>a._hr===h).length}));
-  grid.appendChild(chartCard("Activity by start time",vbars(byHour,{fmtY:fmtInt})));
+  grid.appendChild(chartCard("Activity by start time",null,vbars(byHour,{fmtY:fmtInt})));
 
   // avg daily miles by weekday
   const wk=DOW.map((d,i)=>{ const list=acts.filter(a=>a._dow===i); const days=new Set(list.map(a=>a.date)).size||1;
@@ -409,7 +409,7 @@ function buildStats(){
   // distance buckets
   const buckets=[["<1",0,1],["1-2",1,2],["2-3",2,3],["3-4",3,4],["4-6",4,6],["6-8",6,8],["8-10",8,10],["10-13",10,13],["13-18",13,18],["18-26",18,26.2],["26+",26.2,1e9]];
   const distB=buckets.map(([lbl,lo,hi])=>({k:lbl,v:footActs.filter(a=>a.dist_mi>=lo&&a.dist_mi<hi).length})).filter(b=>b.v>0);
-  grid.appendChild(chartCard("Run distances",vbars(distB,{fmtY:fmtInt,rotate:true}),true));
+  grid.appendChild(chartCard("Run distances",null,vbars(distB,{fmtY:fmtInt,rotate:true}),true));
 
   // indoor vs outdoor
   const indoor=acts.filter(a=>a.trainer).length, outdoor=acts.length-indoor;
@@ -451,7 +451,7 @@ function buildStats(){
   if(hasWeather){
     const tbins=[["<20",-99,20],["20s",20,30],["30s",30,40],["40s",40,50],["50s",50,60],["60s",60,70],["70s",70,80],["80s",80,90],["90+",90,999]];
     const tb=tbins.map(([lbl,lo,hi])=>({k:lbl+"°",v:acts.filter(a=>a.temp_f!=null&&a.temp_f>=lo&&a.temp_f<hi).length})).filter(b=>b.v>0);
-    grid.appendChild(chartCard("Temperature",vbars(tb,{fmtY:fmtInt,rotate:true})));
+    grid.appendChild(chartCard("Temperature",null,vbars(tb,{fmtY:fmtInt,rotate:true})));
     const cond=d3.rollups(acts.filter(a=>a.condition),v=>v.length,a=>a.condition).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
     grid.appendChild(chartCard("Weather conditions","rain or shine",hbars(cond,{accent:true})));
   }
