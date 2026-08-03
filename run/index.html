@@ -70,7 +70,6 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .dot{fill:var(--accent);fill-opacity:.5}
 /* ---- geography ---- */
 .geo-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px 48px}
-.map-region{stroke:#fff;stroke-width:.4px}
 .tablewrap{max-height:420px;overflow:auto}
 .flag{font-family:var(--mono);color:var(--muted)}
 /* ---- calendar ---- */
@@ -467,53 +466,9 @@ function buildGeography(){
       tb.appendChild(tr); });
     t.appendChild(tb); wrap.appendChild(t); c.appendChild(wrap); return c;
   }
-  const worldCard=el("div","card"); worldCard.appendChild(el("p","chart-title","Countries visited"));
-  const worldHost=el("div"); worldCard.appendChild(worldHost);
-  const usCard=el("div","card"); usCard.appendChild(el("p","chart-title","US states visited"));
-  const usHost=el("div"); usCard.appendChild(usHost);
-
-  grid.appendChild(worldCard);
   grid.appendChild(geoTable("Countries",byCountry));
-  if(byState.length){ grid.appendChild(usCard); grid.appendChild(geoTable("US states",byState)); }
-
-  drawWorld(worldHost,new Map(byCountry.map(d=>[normName(d.k),d.mi])));
-  if(byState.length) drawUS(usHost,new Map(byState.map(d=>[d.k,d.mi])));
+  if(byState.length) grid.appendChild(geoTable("US states",byState));
   return s;
-}
-
-/* --- maps (topojson from CDN; degrade gracefully) --- */
-const COUNTRY_ALIAS={"united states":"united states of america","russia":"russia","south korea":"south korea",
-  "north korea":"north korea","czechia":"czech republic","bosnia and herzegovina":"bosnia and herz.","tanzania":"tanzania"};
-function normName(n){ n=(n||"").toLowerCase().trim(); return COUNTRY_ALIAS[n]||n; }
-function paint(host,geojson,keyFn,valMap,{w=560,h=340,fit}){
-  const s=svg(w,h); const proj=fit(d3.geoMercator(),geojson); const path=d3.geoPath(proj);
-  const vals=[...valMap.values()]; const max=d3.max(vals)||1;
-  const color=d3.scaleSequential().domain([0,Math.sqrt(max)]).interpolator(t=>d3.interpolate("#ffe0cd","#fc4c02")(t));
-  s.append("g").selectAll("path").data(geojson.features).join("path").attr("class","map-region").attr("d",path)
-    .attr("fill",f=>{ const v=valMap.get(keyFn(f)); return v?color(Math.sqrt(v)):"#f0ece4"; })
-    .append("title").text(f=>{ const v=valMap.get(keyFn(f)); return keyFn(f)+(v?`: ${fmt1(v)} mi`:""); });
-  host.appendChild(s.node());
-}
-function drawWorld(host,valMap){
-  d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(topo=>{
-    const geo=topojson.feature(topo,topo.objects.countries);
-    paint(host,geo,f=>normName(f.properties.name),valMap,{h:320,
-      fit:(p,g)=>p.fitExtent([[4,4],[556,316]],g)});
-  }).catch(()=>host.appendChild(el("p","chart-cap","Map needs internet to load; the table above still works.")));
-}
-const FIPS={"01":"Alabama","02":"Alaska","04":"Arizona","05":"Arkansas","06":"California","08":"Colorado","09":"Connecticut","10":"Delaware","11":"District of Columbia","12":"Florida","13":"Georgia","15":"Hawaii","16":"Idaho","17":"Illinois","18":"Indiana","19":"Iowa","20":"Kansas","21":"Kentucky","22":"Louisiana","23":"Maine","24":"Maryland","25":"Massachusetts","26":"Michigan","27":"Minnesota","28":"Mississippi","29":"Missouri","30":"Montana","31":"Nebraska","32":"Nevada","33":"New Hampshire","34":"New Jersey","35":"New Mexico","36":"New York","37":"North Carolina","38":"North Dakota","39":"Ohio","40":"Oklahoma","41":"Oregon","42":"Pennsylvania","44":"Rhode Island","45":"South Carolina","46":"South Dakota","47":"Tennessee","48":"Texas","49":"Utah","50":"Vermont","51":"Virginia","53":"Washington","54":"West Virginia","55":"Wisconsin","56":"Wyoming","72":"Puerto Rico"};
-function drawUS(host,valMap){
-  d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(topo=>{
-    const geo=topojson.feature(topo,topo.objects.states);
-    const s=svg(560,340); const proj=d3.geoAlbersUsa().fitExtent([[4,4],[556,336]],geo); const path=d3.geoPath(proj);
-    const max=d3.max([...valMap.values()])||1;
-    const color=t=>d3.interpolate("#ffe0cd","#fc4c02")(t);
-    s.append("g").selectAll("path").data(geo.features).join("path").attr("class","map-region").attr("d",path)
-      .attr("fill",f=>{ const name=(f.properties&&f.properties.name)||FIPS[f.id]; const v=valMap.get(name);
-        return v?color(Math.sqrt(v)/Math.sqrt(max)):"#f0ece4"; })
-      .append("title").text(f=>{ const name=(f.properties&&f.properties.name)||FIPS[f.id]; const v=valMap.get(name); return name+(v?`: ${fmt1(v)} mi`:""); });
-    host.appendChild(s.node());
-  }).catch(()=>host.appendChild(el("p","chart-cap","Map needs internet to load; the table above still works.")));
 }
 
 /* --- daily log calendars --- */
