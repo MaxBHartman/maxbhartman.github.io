@@ -123,7 +123,7 @@ const fmtInt = n => Math.round(n).toLocaleString();
 const fmt1 = n => (Math.round(n*10)/10).toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1});
 const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
 function pace(sPerMi){ if(!sPerMi||!isFinite(sPerMi))return "—"; const m=Math.floor(sPerMi/60), s=Math.round(sPerMi%60); return `${m}:${String(s).padStart(2,"0")}`; }
-function hms(totalSec){ const h=Math.floor(totalSec/3600), m=Math.floor((totalSec%3600)/60); return h?`${h}:${String(m).padStart(2,"0")}`:`0:${String(m).padStart(2,"0")}`; }
+function hms(totalSec){ const h=Math.floor(totalSec/3600), m=Math.floor((totalSec%3600)/60), s=Math.floor(totalSec%60); return h?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`0:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`; }
 function pretty(t){ return t.replace(/([a-z])([A-Z])/g,"$1 $2"); }
 function isoLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -427,10 +427,6 @@ function buildStats(){
         scatter(pts,{xDom:[d3.min(pts,p=>p.x)-20,d3.max(pts,p=>p.x)+20],yDom:[d3.min(pts,p=>p.y)-5,d3.max(pts,p=>p.y)+5],
           xLabel:"pace (min/mi)",yLabel:"avg heart rate (bpm)",fmtX:d=>pace(d),fmtY:d=>d}),true));
     }
-
-    const hrPts=acts.filter(a=>a.avg_hr).map(a=>({x:a._d,y:a.avg_hr}));
-    grid.appendChild(chartCard("Heart rate over time","average bpm per activity",
-      timeline(hrPts,{fmtY:fmtInt}),true));
   }
 
   // weather
