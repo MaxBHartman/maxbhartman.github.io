@@ -44,16 +44,18 @@ should return JSON shaped like `{"meta": {...}, "activities": [...]}` with
 your real activities. Open `/run/` in a browser and confirm the dashboard
 renders.
 
-To test the enrichment cron without waiting for its schedule:
+To run the enrichment job without waiting for its daily schedule:
 
 ```bash
-wrangler dev --test-scheduled
-# then, in another terminal:
-curl "http://localhost:8787/__scheduled?cron=0+8+*+*+*"
+curl https://maxhartman.net/api/strava/enrich
 ```
 
-Geography/Weather sections on `/run` stay hidden until this has run at least
-once and found something to enrich.
+This hits the same code the cron trigger runs, against your real deployed
+Worker — reliable, unlike trying to simulate the cron via `wrangler dev
+--test-scheduled` locally (that only works against wrangler's local KV
+simulation, not the real one, unless you fight with per-binding remote-mode
+flags). Geography/Weather sections on `/run` stay hidden until this has run
+at least once and found something to enrich.
 
 ## Rotating credentials
 
