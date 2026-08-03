@@ -420,11 +420,11 @@ function buildStats(){
     const z=zones.map(([n,lbl,lo,hi])=>({k:n,v:acts.filter(a=>a.avg_hr&&a.avg_hr>=lo&&a.avg_hr<hi).length}));
     grid.appendChild(chartCard("Heart-rate zones","activities grouped by average heart rate",vbars(z,{fmtY:fmtInt})));
     // pace vs hr
-    const pts=footActs.filter(a=>a.avg_hr&&a.pace_s_per_mi).map(a=>({x:a.avg_hr,y:a.pace_s_per_mi}));
+    const pts=footActs.filter(a=>a.avg_hr&&a.pace_s_per_mi).map(a=>({x:a.pace_s_per_mi,y:a.avg_hr}));
     if(pts.length>5){
       grid.appendChild(chartCard("Pace vs heart rate","each dot is one activity",
-        scatter(pts,{xDom:[d3.min(pts,p=>p.x)-5,d3.max(pts,p=>p.x)+5],yDom:[d3.min(pts,p=>p.y)-20,d3.max(pts,p=>p.y)+20],
-          xLabel:"avg heart rate (bpm)",yLabel:"pace (min/mi)",fmtX:d=>d,fmtY:d=>pace(d)}),true));
+        scatter(pts,{xDom:[d3.min(pts,p=>p.x)-20,d3.max(pts,p=>p.x)+20],yDom:[d3.min(pts,p=>p.y)-5,d3.max(pts,p=>p.y)+5],
+          xLabel:"pace (min/mi)",yLabel:"avg heart rate (bpm)",fmtX:d=>pace(d),fmtY:d=>d}),true));
     }
 
     const hrPts=acts.filter(a=>a.avg_hr).map(a=>({x:a._d,y:a.avg_hr}));
