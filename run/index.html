@@ -134,7 +134,7 @@ allActs.forEach(a=>{ a._d = new Date(a.datetime||a.date); a._dow = (a._d.getDay(
 allActs.sort((a,b)=> a.date<b.date?-1:1);
 const FOOT = new Set(["Run","TrailRun","Walk","Hike","VirtualRun"]);
 const allTypes = [...new Set(allActs.map(a=>a.type))].sort();
-let selectedTypes = new Set(allTypes);
+let selectedTypes = new Set(allTypes.includes("Run") ? ["Run"] : allTypes);
 
 /* acts/footActs/etc. are the *filtered* working set, recomputed whenever the
    activity-type toggle changes. allActs (below) stays the full lifetime set,
@@ -238,20 +238,6 @@ function hbars(data,{w=560,rowH=30,mL=120,mR=48,fmtV=fmtInt,accent}={}){
   rows.append("text").attr("x",d=>x(d.v)+8).attr("y",rowH/2).attr("dy",".32em").attr("font-family","var(--mono)").attr("font-size",10.5).attr("fill","var(--muted)").text(d=>fmtV(d.v));
   return s.node();
 }
-function timeline(pts,{w=1120,h=260,mL=48,mR=10,mT=12,mB=28,fmtY=fmtInt}={}){
-  const s=svg(w,h); const iw=w-mL-mR, ih=h-mT-mB;
-  const x=d3.scaleTime().domain(d3.extent(pts,p=>p.x)).range([0,iw]);
-  const y=d3.scaleLinear().domain(d3.extent(pts,p=>p.y)).nice().range([ih,0]);
-  const g=s.append("g").attr("transform",`translate(${mL},${mT})`);
-  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtY).tickSize(-iw))
-    .call(g=>g.selectAll(".tick line").attr("class","gridline")).call(g=>g.select(".domain").remove());
-  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).ticks(7));
-  const line=d3.line().x(p=>x(p.x)).y(p=>y(p.y)).curve(d3.curveMonotoneX);
-  g.append("path").datum(pts).attr("fill","none").attr("stroke","var(--accent)").attr("stroke-width",1.4).attr("d",line);
-  g.selectAll("circle").data(pts).join("circle").attr("class","dot").attr("r",2).attr("cx",p=>x(p.x)).attr("cy",p=>y(p.y));
-  return s.node();
-}
-
 /* ============================ builders ============================ */
 function buildHero(){
   const first=allActs[0].date, last=allActs[allActs.length-1].date;
@@ -301,7 +287,7 @@ function buildTypeFilter(onChange){
   const s=sectionShell("Filter","Activity types","toggle which types feed everything below (the totals up top always cover your whole history)");
   const row=el("div","tabs");
   allTypes.forEach(t=>{
-    const b=el("button","tab active",pretty(t));
+    const b=el("button","tab"+(selectedTypes.has(t)?" active":""),pretty(t));
     b.onclick=()=>{
       if(selectedTypes.has(t)){
         if(selectedTypes.size===1) return; // always keep at least one type selected
@@ -409,10 +395,6 @@ function buildStats(){
     const bins=d3.range(lo,hi,bucketW).map(s=>({k:(s%60===0?Math.round(s/60)+"′":""),_s:s,v:paces.filter(p=>p>=s&&p<s+bucketW).length}));
     const mean=d3.mean(paces);
     grid.appendChild(chartCard("Pace distribution",`mean ${pace(mean)} /mi · median ${pace(d3.median(paces))} /mi`,vbars(bins,{fmtY:fmtInt})));
-
-    const pacePts=footActs.filter(a=>a.pace_s_per_mi).map(a=>({x:a._d,y:a.pace_s_per_mi}));
-    grid.appendChild(chartCard("Pace over time","foot activities, seconds per mile",
-      timeline(pacePts,{fmtY:d=>pace(d)}),true));
   }
 
   // HR zones
@@ -424,7 +406,7 @@ function buildStats(){
     const pts=footActs.filter(a=>a.avg_hr&&a.pace_s_per_mi).map(a=>({x:a.pace_s_per_mi,y:a.avg_hr}));
     if(pts.length>5){
       grid.appendChild(chartCard("Pace vs heart rate","each dot is one activity",
-        scatter(pts,{xDom:[d3.min(pts,p=>p.x)-20,d3.max(pts,p=>p.x)+20],yDom:[d3.min(pts,p=>p.y)-5,d3.max(pts,p=>p.y)+5],
+        scatter(pts,{xDom:[d3.max(pts,p=>p.x)+20,d3.min(pts,p=>p.x)-20],yDom:[d3.min(pts,p=>p.y)-5,d3.max(pts,p=>p.y)+5],
           xLabel:"pace (min/mi)",yLabel:"avg heart rate (bpm)",fmtX:d=>pace(d),fmtY:d=>d}),true));
     }
   }
