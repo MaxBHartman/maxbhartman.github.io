@@ -146,29 +146,69 @@ async function mergeEnrichment(activities, env) {
   return { hasGeo, hasWeather };
 }
 
-async function enrichOne(act, env) {
+// Cloudflare's free plan caps a single invocation to 50 external fetch()
+// subrequests; geocode + weather are both external calls, so a run over an
+// unbounded activity list can silently hit that wall partway through (the
+// remaining activities just never get attempted). Stay well under it, and
+// dedupe geocoding by location — most activities share a handful of start
+// points, so this turns "one geocode call per activity" into "one call per
+// distinct place you've ever started from."
+const MAX_EXTERNAL_CALLS_PER_RUN = 40;
+const roundCoord = (n) => Math.round(n * 100) / 100; // ~1.1km buckets — plenty for country/state
+
+// Checking "is this already enriched" per-activity via individual KV get()
+// calls (100+ of them, sequentially) is what made a full backfill run slow
+// enough to time out. list() once per prefix and keep the id set in memory
+// instead — KV get/put aren't subject to the 50-subrequest fetch() cap, but
+// they're still one network round trip each, and hundreds of them add up.
+async function loadKeySet(env, prefix) {
+  const ids = new Set();
+  let cursor;
+  for (;;) {
+    const res = await env.STRAVA_KV.list({ prefix, cursor });
+    for (const k of res.keys) ids.add(k.name.slice(prefix.length));
+    if (res.list_complete || !res.cursor) break;
+    cursor = res.cursor;
+  }
+  return ids;
+}
+
+async function enrichOne(act, env, budget, geoDone, weatherDone) {
   if (!act.latlng) return;
   const [lat, lon] = act.latlng;
+  const idStr = String(act.id);
 
-  const geoKey = `geo:${act.id}`;
-  if (!(await env.STRAVA_KV.get(geoKey))) {
-    try {
-      const res = await fetch(
-        `${GEOCODE_URL}?latitude=${lat}&longitude=${lon}&localityLanguage=en`
-      );
-      if (res.ok) {
-        const j = await res.json();
-        const country = j.countryName || null;
-        const usState = j.countryCode === "US" ? j.principalSubdivision || null : null;
-        await env.STRAVA_KV.put(geoKey, JSON.stringify({ country, us_state: usState }));
+  if (!geoDone.has(idStr)) {
+    const locKey = `geoloc:${roundCoord(lat)},${roundCoord(lon)}`;
+    let resolved = await env.STRAVA_KV.get(locKey, "json");
+    if (!resolved && budget.remaining > 0) {
+      budget.remaining--;
+      try {
+        const res = await fetch(
+          `${GEOCODE_URL}?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+        );
+        if (res.ok) {
+          const j = await res.json();
+          resolved = {
+            country: j.countryName || null,
+            us_state: j.countryCode === "US" ? j.principalSubdivision || null : null,
+          };
+          await env.STRAVA_KV.put(locKey, JSON.stringify(resolved));
+        } else if (budget.errors) {
+          budget.errors.push(`geo ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        }
+      } catch (e) {
+        if (budget.errors) budget.errors.push(`geo throw: ${String(e)}`);
       }
-    } catch (_) {
-      // leave unresolved; next cron run retries
+    }
+    if (resolved) {
+      await env.STRAVA_KV.put(`geo:${act.id}`, JSON.stringify(resolved));
+      geoDone.add(idStr);
     }
   }
 
-  const weatherKey = `weather:${act.id}`;
-  if (!(await env.STRAVA_KV.get(weatherKey)) && act.datetime) {
+  if (!weatherDone.has(idStr) && act.datetime && budget.remaining > 0) {
+    budget.remaining--;
     try {
       const day = act.datetime.slice(0, 10);
       const hour = Number(act.datetime.slice(11, 13));
@@ -184,11 +224,16 @@ async function enrichOne(act, env) {
         if (temps[hour] != null) {
           const tempF = Math.round(temps[hour]);
           const condition = WMO[codes[hour]] || "Clouds";
-          await env.STRAVA_KV.put(weatherKey, JSON.stringify({ temp_f: tempF, condition }));
+          await env.STRAVA_KV.put(`weather:${act.id}`, JSON.stringify({ temp_f: tempF, condition }));
+          weatherDone.add(idStr);
+        } else if (budget.errors) {
+          budget.errors.push(`weather no-temp-for-hour ${hour}: ${JSON.stringify(j).slice(0, 200)}`);
         }
+      } else if (budget.errors) {
+        budget.errors.push(`weather ${res.status}: ${(await res.text()).slice(0, 200)}`);
       }
-    } catch (_) {
-      // leave unresolved; next cron run retries
+    } catch (e) {
+      if (budget.errors) budget.errors.push(`weather throw: ${String(e)}`);
     }
   }
 }
@@ -241,12 +286,27 @@ async function handleScheduled(env) {
   const token = await getAccessToken(env);
   const raw = await fetchAllActivities(token);
   const activities = raw.map(slim);
-  let attempted = 0;
+  const budget = { remaining: MAX_EXTERNAL_CALLS_PER_RUN, errors: [] };
+  const [geoDone, weatherDone] = await Promise.all([
+    loadKeySet(env, "geo:"),
+    loadKeySet(env, "weather:"),
+  ]);
+  let withLatlng = 0;
   for (const act of activities) {
-    if (act.latlng) attempted++;
-    await enrichOne(act, env);
+    if (!act.latlng) continue;
+    withLatlng++;
+    await enrichOne(act, env, budget, geoDone, weatherDone);
   }
-  return { total: activities.length, withLatlng: attempted };
+  const callsUsed = MAX_EXTERNAL_CALLS_PER_RUN - budget.remaining;
+  return {
+    total: activities.length,
+    withLatlng,
+    sampleErrors: budget.errors.slice(0, 5),
+    geoResolved: geoDone.size,
+    weatherResolved: weatherDone.size,
+    callsUsed,
+    exhaustedBudget: budget.remaining === 0,
+  };
 }
 
 export default {
