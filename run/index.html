@@ -404,8 +404,9 @@ function buildStats(){
   // pace distribution
   if(footActs.some(a=>a.pace_s_per_mi)){
     const paces=footActs.map(a=>a.pace_s_per_mi).filter(Boolean);
-    const lo=Math.floor(d3.min(paces)/60), hi=Math.ceil(d3.max(paces)/60);
-    const bins=d3.range(lo,hi+1).map(m=>({k:(m%2===0?m+"′":""),_m:m,v:paces.filter(p=>p>=m*60&&p<(m+1)*60).length}));
+    const bucketW=15; // seconds — finer than a full minute so the shape reads as a curve, not spikes
+    const lo=Math.floor(d3.min(paces)/bucketW)*bucketW, hi=Math.ceil(d3.max(paces)/bucketW)*bucketW;
+    const bins=d3.range(lo,hi,bucketW).map(s=>({k:(s%60===0?Math.round(s/60)+"′":""),_s:s,v:paces.filter(p=>p>=s&&p<s+bucketW).length}));
     const mean=d3.mean(paces);
     grid.appendChild(chartCard("Pace distribution",`mean ${pace(mean)} /mi · median ${pace(d3.median(paces))} /mi`,vbars(bins,{fmtY:fmtInt})));
 
