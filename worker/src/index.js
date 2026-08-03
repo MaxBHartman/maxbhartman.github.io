@@ -241,14 +241,30 @@ async function handleScheduled(env) {
   const token = await getAccessToken(env);
   const raw = await fetchAllActivities(token);
   const activities = raw.map(slim);
+  let attempted = 0;
   for (const act of activities) {
+    if (act.latlng) attempted++;
     await enrichOne(act, env);
   }
+  return { total: activities.length, withLatlng: attempted };
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/strava/enrich") {
+      try {
+        const stats = await handleScheduled(env);
+        return new Response(JSON.stringify({ ok: true, ...stats }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ ok: false, error: String(err), stack: err.stack }), {
+          status: 502,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      }
+    }
     if (url.pathname.startsWith("/api/strava")) {
       try {
         return await handleFetch(request, env, ctx);
