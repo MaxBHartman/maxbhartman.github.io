@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmarking Decision Models — Max Hartman</title>
+<meta name="description" content="Choosing What We Scan: Benchmarking More Decision Models. Originally published on the Corridor blog.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/site.css">
+<style>
+.post p, .post li { font-size: 16px; line-height: 1.75; }
+.post h2 { font-weight: 500; font-size: 20px; margin: 40px 0 8px; }
+.post h3 { font-weight: 500; font-size: 17px; margin: 28px 0 8px; }
+.post ul, .post ol { padding-left: 20px; }
+.notice { border: 1px solid var(--line); background: var(--panel); padding: 14px 18px; font-size: 14px; color: var(--muted); margin: 0 0 28px; }
+.toc { font-family: var(--mono); font-size: 12px; margin: 0 0 8px; }
+.toc ol { margin: 6px 0 0; padding-left: 18px; }
+.toc ol ol { margin: 0; list-style: lower-alpha; }
+.toc li { font-size: 12.5px; line-height: 1.9; }
+.post figure { margin: 28px 0; }
+.post figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); }
+.post figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; font-style: italic; }
+.table-scroll { overflow-x: auto; margin: 20px 0; }
+.post table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.post th, .post td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.post th { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+.post td:first-child { font-family: var(--mono); font-size: 12.5px; }
+.post td.date { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="site-nav">
+  <div class="wrap">
+    <span class="brand mono"><a href="../../../">MAX HARTMAN</a></span>
+    <nav class="links">
+      <a href="../../../work/">Work</a>
+      <a href="../../" aria-current="page">Research</a>
+      <a href="../../../run/">Run</a>
+      <a href="../../../books/">Books</a>
+      <a href="../../../projects/">Projects</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" style="padding-top:56px;padding-bottom:8px;">
+    <p class="eyebrow">Blog Post · Corridor</p>
+    <h1 style="font-size:clamp(26px,4.5vw,34px);margin:0 0 12px;">Choosing What We Scan: Benchmarking More Decision Models</h1>
+    <p class="section-sub" style="margin-bottom:0;">October 16, 2026 · Max Hartman</p>
+  </section>
+
+  <section class="post">
+    <p class="notice">Originally published on the <a href="https://www.corridor.dev/blog/decision-models-benchmark">Corridor blog</a>
+      (<a href="https://web.archive.org/web/20261016193726/https://www.corridor.dev/blog/decision-models-benchmark">archived copy</a>).</p>
+
+    <nav class="toc">
+      <span class="eyebrow">Contents</span>
+      <ol>
+        <li><a href="#decision-models">Decision Models</a></li>
+        <li><a href="#setup">Experimental setup</a></li>
+        <li><a href="#benchmark">Benchmark and Metrics</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#findings">Key Findings</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+        <li><a href="#appendix">Appendix</a>
+          <ol>
+            <li><a href="#models">Models</a></li>
+            <li><a href="#full-results">Full Results</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <p>Corridor scans every change inside the coding agent's loop, checking it against guardrails right before commit so issues get caught before a PR ever exists. Earlier this month, we <a href="../decision-models-gating/">demonstrated</a> how we use TypeSafe's Jev as a gating mechanism to decide when to run this scan. We found that using Jev in this manner halves the cost of this task and reduces unnecessary scans, while maintaining precision.</p>
+
+    <p>Since our initial analysis, numerous decision models have been released. In the last two weeks, OpenAI (Decisions API), Microsoft (Microsoft-Decision-1), and Perplexity (Perplexity Decider) have all released models to solve decision tasks.</p>
+
+    <p>However, these releases have not been adequately evaluated for the security-minded tasks we are interested in here at Corridor. The standard benchmark for decision models over recent weeks has been Jevbench, which offers only 20 samples tagged as safety and security. These 20 samples are also mostly unrealistic: six of them check whether a model ignores injected instructions that the prompt already labels as untrusted, and two are trivial 2FA lookups. None of these tasks measure real security knowledge or unprompted threat detection in the wild.</p>
+
+    <p>Additionally, these decision model releases report a single metric that encapsulates overall model performance. They don't separate out sub-categories like security, making their results difficult to interpret for our use case.</p>
+
+    <p>In this blogpost, we evaluate the frontier decision models as decision gates for our security enforcement scan.</p>
+
+    <h2 id="decision-models">Decision Models</h2>
+    <p>A decision model takes a program state and a typed question and returns a decision with a probability, in a single forward pass. The probability is trained to reflect how likely the claim is to hold, not produced as a side effect of generating text, so it can be thresholded directly: raise the threshold to skip more commits, lower it to catch more vulnerabilities, with no prompt changes.</p>
+
+    <p>We use one as a gate in front of our security enforcement scan. Each commit's diff goes to the model with a single claim, "the code in the state contains a security vulnerability." If the probability is below the threshold, the commit passes without the full scan; otherwise the scan runs as before. In our <a href="../decision-models-gating/">first post</a>, this cut scan cost in half and raised precision with little loss in recall, and Jev beat every other LLM we tested at this task.</p>
+
+    <h2 id="setup">Experimental setup</h2>
+    <p>Our security enforcement gate makes one decision per commit: is the diff vulnerable? If the gate returns no (p &lt; t), the commit is marked not vulnerable and the full scan never runs. If the gate returns yes (p ≥ t), the security enforcement scan runs, and the commit is marked vulnerable if the scan reports a security vulnerability.</p>
+
+    <figure>
+      <img src="fig1-flow.webp" alt="Flow chart: an agent runs git commit; a decision model scores the commit and returns probability p. If p &lt; t the full scan is skipped and the commit goes through. If p ≥ t the full security scan runs; with no finding the commit goes through, with a finding the commit is blocked." loading="lazy">
+      <figcaption>Figure 1. Diagram of gating the security enforcement scan.</figcaption>
+    </figure>
+
+    <p>In our experiments, we consider nineteen decision models to use as gates, described in the table in the <a href="#models">Appendix</a>. Every model was called through the OpenRouter API, except Jev 1.13, Jev 1.14, and GPT-6 Luna Decisions, which we called through the vendors' own APIs.</p>
+
+    <h2 id="benchmark">Benchmark and Metrics</h2>
+    <p>We ran each security enforcement gate configuration on an internal security enforcement scan benchmark constructed using commits from open-source and synthetic sources. Ground truth labels of whether a diff contains security findings were assigned using a panel of LLM judges, chosen for their alignment with human ground truth labels. They are described in the following table:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Model</th><th>Reasoning</th></tr></thead>
+        <tbody>
+          <tr><td>gemini-3.1-pro-preview</td><td>N/A</td></tr>
+          <tr><td>gpt-6-astra</td><td>High</td></tr>
+          <tr><td>kimi-k3</td><td>High</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>We measure latency per commit as gate latency + security enforcement scan latency when the gate decides to call our security enforcement scan, or just gate latency when it skips the scan, averaged over all commits. Cost is measured as per 1,000 commits at API list price. This is the exact same setup as our <a href="../decision-models-gating/">original decision model blogpost</a>.</p>
+
+    <h2 id="results">Results</h2>
+    <p>In this section we provide three plots: recall versus latency (Figure 2), precision versus recall (Figure 3), and recall versus cost (Figure 4). In general, along the frontier, using a gate decreases latency and cost, increases precision, and minimally decreases recall. We found that Decider V1.1 27B, Mercury Decide, Jev 1.14, and Decision-1 lead the frontier for our task.</p>
+
+    <figure>
+      <img src="fig2-recall-latency-top5.webp" alt="Recall versus average latency per commit for Jev 1.14, Decider V1.1 27B, Mercury Decide, Decision-1, Jev 1.13, and no gate." loading="lazy">
+      <figcaption>Figure 2. Recall versus latency on vulnerability detection using our internal security enforcement scan benchmark on the top 5 models. The full results are in the <a href="#full-results">Appendix</a>.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="fig3-precision-recall-top5.webp" alt="Precision versus recall for Jev 1.14, Decider V1.1 27B, Mercury Decide, Decision-1, Jev 1.13, and no gate." loading="lazy">
+      <figcaption>Figure 3. Precision versus recall on vulnerability detection using our internal security enforcement scan benchmark on the top 5 models. The full results are in the <a href="#full-results">Appendix</a>.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="fig4-recall-cost-top5.webp" alt="Recall versus cost per 1,000 commits for Jev 1.14, Decider V1.1 27B, Mercury Decide, Decision-1, Jev 1.13, and no gate." loading="lazy">
+      <figcaption>Figure 4. Recall versus cost on vulnerability detection using our internal security enforcement scan benchmark on the top 5 models. The full results are in the <a href="#full-results">Appendix</a>.</figcaption>
+    </figure>
+
+    <h2 id="findings">Key Findings</h2>
+    <p><strong>Perplexity's Decider and TypeSafe's Jev lead the recall–latency frontier.</strong> For any fixed latency, cost, or precision, Decider V1.1 27B and Jev 1.14 catch more vulnerable commits than any other gate we tested.</p>
+
+    <p><strong>Most decision models are not usable security scanner gates.</strong> Of the gates considered, only four beat the best LLM gates from our first post: Decider V1.1 27B, Mercury Decide, Jev 1.14, and Decision-1. The rest perform similarly to or worse than the LLM gates in the first post.</p>
+
+    <p><strong>The size of the LLM backbone does not imply a stronger decision gate.</strong> In two vendor families, the larger model scores below the smaller. Cloudflare Clef Flash (9B) at 0.910 AUROC beats Clef (27B) at 0.847.</p>
+
+    <h2 id="conclusion">Conclusion</h2>
+    <p>We find that Decider V1.1 27B, Mercury Decide, Jev 1.14, and Decision-1 lead the frontier for our security scan enforcement task, while most other available decision models perform at or below raw LLM performance.</p>
+
+    <p>Our previous results demonstrated that Jev 1.13 was the model to use as a gate for this task. However, the area of decision models is growing rapidly, with new models being released every week and new ways to apply them across Corridor to reduce the cost and latency of our product. We'll keep re-running this benchmark as new models land, so subscribe to our blog for updates.</p>
+
+    <h2 id="appendix">Appendix</h2>
+    <h3 id="models">Models</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Model</th><th>Creator</th><th>Release date</th></tr></thead>
+        <tbody>
+          <tr><td>Jev 1.13</td><td>TypeSafe AI</td><td class="date">2026-09-18</td></tr>
+          <tr><td>Jev 1.14</td><td>TypeSafe AI</td><td class="date">2026-10-14</td></tr>
+          <tr><td>GPT-6 Luna Decisions (OpenAI Decisions API)</td><td>OpenAI</td><td class="date">2026-09-29</td></tr>
+          <tr><td>Microsoft-Decision-1</td><td>Microsoft</td><td class="date">2026-10-08</td></tr>
+          <tr><td>Decider V1.1 27B</td><td>Perplexity</td><td class="date">2026-10-07</td></tr>
+          <tr><td>Mercury Decide</td><td>Inception</td><td class="date">2026-09-30</td></tr>
+          <tr><td>d1</td><td>Liquid AI</td><td class="date">2026-10-01</td></tr>
+          <tr><td>Clef Flash</td><td>Cloudflare</td><td class="date">2026-10-01</td></tr>
+          <tr><td>Clef</td><td>Cloudflare</td><td class="date">2026-10-01</td></tr>
+          <tr><td>Clef Omni</td><td>Cloudflare</td><td class="date">2026-10-09</td></tr>
+          <tr><td>Drex v1.5</td><td>Nace.AI</td><td class="date">2026-10-09</td></tr>
+          <tr><td>Drex v2.0</td><td>Nace.AI</td><td class="date">2026-10-12</td></tr>
+          <tr><td>Tev1 4B Experimental</td><td>Together AI</td><td class="date">2026-09-30</td></tr>
+          <tr><td>Kev 4B</td><td>Jared Palmer (open weights)</td><td class="date">2026-09-25</td></tr>
+          <tr><td>Solar Decide</td><td>Upstage</td><td class="date">2026-09-28</td></tr>
+          <tr><td>Solar Decide Flash</td><td>Upstage</td><td class="date">2026-10-08</td></tr>
+          <tr><td>Classify-1</td><td>ScaleDown</td><td class="date">2026-10-13</td></tr>
+          <tr><td>Span-01</td><td>Respan</td><td class="date">2026-09-26</td></tr>
+          <tr><td>Span-01 Lite</td><td>Respan</td><td class="date">2026-09-26</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="full-results">Full Results</h3>
+    <figure>
+      <img src="fig5-recall-latency-all.webp" alt="Recall versus average latency per commit for all nineteen decision models, with frontier models highlighted, and no gate." loading="lazy">
+      <figcaption>Figure 5. Recall versus latency on vulnerability detection using our internal security enforcement scan benchmark on all tested models.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="fig6-precision-recall-all.webp" alt="Precision versus recall for all nineteen decision models, with frontier models highlighted, and no gate." loading="lazy">
+      <figcaption>Figure 6. Precision versus recall on vulnerability detection using our internal security enforcement scan benchmark on all tested models.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="fig7-recall-cost-all.webp" alt="Recall versus cost per 1,000 commits for all nineteen decision models, with frontier models highlighted, and no gate." loading="lazy">
+      <figcaption>Figure 7. Recall versus cost on vulnerability detection using our internal security enforcement scan benchmark on all tested models.</figcaption>
+    </figure>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">Max Hartman · San Francisco, California</div>
+</footer>
+</body>
+</html>

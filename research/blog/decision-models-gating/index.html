@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision Models for Gating — Max Hartman</title>
+<meta name="description" content="Choosing What We Scan: How Decision Models Halved our Costs and Reduced False Alarms. Originally published on the Corridor blog.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/site.css">
+<style>
+.post p, .post li { font-size: 16px; line-height: 1.75; }
+.post h2 { font-weight: 500; font-size: 20px; margin: 40px 0 8px; }
+.post ul, .post ol { padding-left: 20px; }
+.notice { border: 1px solid var(--line); background: var(--panel); padding: 14px 18px; font-size: 14px; color: var(--muted); margin: 0 0 28px; }
+.toc { font-family: var(--mono); font-size: 12px; margin: 0 0 8px; }
+.toc ol { margin: 6px 0 0; padding-left: 18px; }
+.toc li { font-size: 12.5px; line-height: 1.9; }
+.post figure { margin: 28px 0; }
+.post figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); }
+.post figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; font-style: italic; }
+.table-scroll { overflow-x: auto; margin: 20px 0; }
+.post table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.post th, .post td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.post th { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+.post td:first-child { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+.refs li { font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<header class="site-nav">
+  <div class="wrap">
+    <span class="brand mono"><a href="../../../">MAX HARTMAN</a></span>
+    <nav class="links">
+      <a href="../../../work/">Work</a>
+      <a href="../../" aria-current="page">Research</a>
+      <a href="../../../run/">Run</a>
+      <a href="../../../books/">Books</a>
+      <a href="../../../projects/">Projects</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" style="padding-top:56px;padding-bottom:8px;">
+    <p class="eyebrow">Blog Post · Corridor</p>
+    <h1 style="font-size:clamp(26px,4.5vw,34px);margin:0 0 12px;">Choosing What We Scan: How Decision Models Halved our Costs and Reduced False Alarms</h1>
+    <p class="section-sub" style="margin-bottom:0;">October 5, 2026 · Max Hartman</p>
+  </section>
+
+  <section class="post">
+    <p class="notice">Originally published on the <a href="https://www.corridor.dev/blog/decision-models-gating">Corridor blog</a>
+      (<a href="https://web.archive.org/web/20261005185114/https://www.corridor.dev/blog/decision-models-gating">archived copy</a>).</p>
+
+    <nav class="toc">
+      <span class="eyebrow">Contents</span>
+      <ol>
+        <li><a href="#scanning">Scanning only what is needed</a></li>
+        <li><a href="#setup">Experimental setup</a></li>
+        <li><a href="#benchmark">Benchmark and Metrics</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#learned">What we learned</a></li>
+        <li><a href="#next">Next steps</a></li>
+        <li><a href="#agent-speed">Keeping checks at agent speed</a></li>
+        <li><a href="#references">References</a></li>
+      </ol>
+    </nav>
+
+    <p>Coding agents now open pull requests, push commits, and merge changes across entire codebases, often in long-running sessions where reviewers barely interact. Historically, insecure code has been mitigated by human review. However, as more and more code is written by autonomous agents, human reviews are becoming the bottleneck. This inspires the use of fast and cheap automated interventions to prevent insecure code from being written and shipped.</p>
+
+    <p>Insecure agent-written code is introducing security threats on a scale never before seen. This year, our team worked with Transluce to expose agent swarms probing an Australian government site for vulnerabilities while fetching ordinary data [<a href="#ref1">1</a>]. During this same period, open-weight models have shown increasing cyber capabilities [<a href="#ref2">2</a>]. When agents can reliably find and exploit vulnerabilities on their own, the time between shipping vulnerable code and it being exploited is much shorter. Vulnerabilities need to be caught before code leaves the agent, not after it ships.</p>
+
+    <p>Corridor's security enforcement for long-running agents proactively assesses each change for vulnerabilities before an agent makes a commit. However, a thorough scan on every commit is slow and expensive, and many commits are clearly safe (such as renaming a variable or adding a comment). Therefore, we explored adding a gating layer to decide when a full scan is needed.</p>
+
+    <h2 id="scanning">Scanning only what is needed</h2>
+    <p>Gating borrows from dual-process thinking, where a fast, cheap System One judgment decides whether an input is worth a closer look, and the slow, deliberate System Two scan runs only when it is [<a href="#ref3">3</a>]. A gate is most useful when it can correctly skip a large share of inputs and costs little to run itself. This can also make the scan more precise, since it can help avoid false alarms.</p>
+
+    <p>A decision model makes a better gate than an LLM because it is trained to make decisions rather than to generate text. It takes the program state and a typed question and returns a decision with its probability in a single forward pass. That probability is trained to reflect how likely the claim is to hold, not produced as a side effect of generating text.</p>
+
+    <p>An LLM gate can be prompted for a confidence score, but that score is generated text, so it tends to be coarse and poorly calibrated. It is also slower to produce. Even a short score like "0.4" spans several tokens, and since an LLM generates one token per forward pass, each decision takes several passes where a decision model needs one. That adds latency and cost to every commit.</p>
+
+    <p>A calibrated probability also makes the gate easy to tune. We can set a threshold and adjust it to trade recall against latency, without rewriting prompts. Relative to the full scan, the gate adds little overhead when it passes a commit on and saves the whole scan when it skips one.</p>
+
+    <p>Compared to traditional classifiers, decision models are general classifiers as they use LLMs as their backbone. This makes them easier to integrate at many different points within Corridor, because they avoid needing to be continually retrained as input and output distributions shift. Below, we report the results of using Jev as a gate to decide when to run our security enforcement for long-running agents, which runs before every commit an agent makes.</p>
+
+    <h2 id="setup">Experimental setup</h2>
+    <p>Our security enforcement gate makes one decision per commit: is the diff vulnerable? If the gate returns no (p &lt; t), the commit is marked not vulnerable and the full scan never runs. If the gate returns yes (p ≥ t), the security enforcement scan runs, and the commit is marked vulnerable if the scan reports a security vulnerability.</p>
+
+    <figure>
+      <img src="fig1-flow.webp" alt="Flow chart: an agent runs git commit; a gate (Jev, CLM-8B or small LLM) returns probability p. If p &lt; t the full scan is skipped and the commit goes through. If p ≥ t the full security scan runs; with no finding the commit goes through, with a finding the commit is blocked." loading="lazy">
+      <figcaption>Figure 1. System flow chart using gate.</figcaption>
+    </figure>
+
+    <p>In our experiments, we consider five models to use as gates, described in the table below.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Model</th><th>Gate</th></tr></thead>
+        <tbody>
+          <tr><td>Jev [<a href="#ref4">4</a>]</td><td>One Jev call scoring the claim "the code in the state contains a security vulnerability"</td></tr>
+          <tr><td>CLM-v0.1-8B [<a href="#ref5">5</a>]</td><td>One CLM call scoring the claim "the code in the state contains a security vulnerability"</td></tr>
+          <tr><td>gpt-5.6-luna [<a href="#ref6">6</a>]</td><td>Prompting for a 0–1 confidence that the diff contains a vulnerability</td></tr>
+          <tr><td>gemini-3.1-flash-lite [<a href="#ref7">7</a>]</td><td>Prompting for a 0–1 confidence that the diff contains a vulnerability</td></tr>
+          <tr><td>gpt-5.4-mini [<a href="#ref8">8</a>]</td><td>Prompting for a 0–1 confidence that the diff contains a vulnerability</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="benchmark">Benchmark and Metrics</h2>
+    <p>We ran each security enforcement gate configuration on an internal security enforcement scan benchmark constructed using commits from open-source and synthetic sources. Ground truth labels of whether a diff contains security findings were assigned using a panel of LLM judges, chosen for their alignment with human ground truth labels. They are described in the following table:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Model</th><th>Reasoning</th></tr></thead>
+        <tbody>
+          <tr><td>gemini-3.1-pro-preview</td><td>N/A</td></tr>
+          <tr><td>gpt-6-astra</td><td>High</td></tr>
+          <tr><td>kimi-k3</td><td>High</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>We measure latency per commit as gate latency + security enforcement scan latency when the gate decides to call our security enforcement scan, or just gate latency when it skips the scan, averaged over all commits. Cost is measured as per 1,000 commits at API list price.</p>
+
+    <h2 id="results">Results</h2>
+    <p>In this section we provide three plots: recall versus latency (Figure 2), precision versus recall (Figure 3), and recall versus cost (Figure 4). In general, along the frontier, using a gate decreases latency and cost, increases precision, and minimally decreases recall. Out of the gates arms we tested, Jev lead to the lowest latency and cost, while setting the precision-recall frontier.</p>
+
+    <figure>
+      <img src="fig2-recall-latency.webp" alt="Chart titled 'Jev Leads the Recall–Latency Frontier': recall versus average latency per commit for Jev, gpt-5.6-luna, gemini-3.1-flash-lite, gpt-5.4-mini, CLM-8B, and no gate." loading="lazy">
+      <figcaption>Figure 2. Recall versus latency on vulnerability detection using our internal security enforcement scan benchmark.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="fig3-precision-recall.webp" alt="Chart titled 'Gating Raises Precision With Little Loss in Recall': precision versus recall for each gate and the no-gate baseline." loading="lazy">
+      <figcaption>Figure 3. Precision versus Recall on vulnerability detection using our internal security enforcement scan benchmark.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="fig4-recall-cost.webp" alt="Chart titled 'Gating Cuts Scanning Cost With Little Loss in Recall': recall versus cost per 1,000 commits for each gate and the no-gate baseline." loading="lazy">
+      <figcaption>Figure 4. Recall versus cost on vulnerability detection using our internal security enforcement scan benchmark.</figcaption>
+    </figure>
+
+    <h2 id="learned">What we learned</h2>
+    <p><strong>Gating improves precision with minimal loss in recall.</strong> Commits the gate skips can't raise false alarms, so a well-tuned gate lifts precision far above running the full scan alone, while recall stays close to the no-gate level with a correctly tuned threshold.</p>
+
+    <p><strong>Jev leads the recall–latency frontier.</strong> For any fixed recall level, a Jev gate leads to the fastest and cheapest security enforcement hook scanning process.</p>
+
+    <p><strong>LLMs for gating works but decision models are better.</strong> From our results, using an LLM gate improves latency however not as much as Jev along the latency-recall frontier. This makes sense since Jev returns a probability trained for the decision, while the LLM's confidence is generated text, which may be a few tokens long depending on the model, leading to multiple forward passes.</p>
+
+    <p><strong>CLM-8B doesn't work as a gate.</strong> Its scores barely separate vulnerable from safe commits, so at every threshold it did worse than simply running the full scan on everything. This is consistent with the findings of [<a href="#ref5">5</a>], which independently found that CLM is a poor verifier.</p>
+
+    <h2 id="next">Next steps</h2>
+    <p><strong>We didn't ablate the scan.</strong> Every configuration put the same security enforcement scan model behind the gate, so we haven't measured how the results shift with a different scanner. A faster or cheaper scanner would shrink what the gate saves, and a stronger one could change which gate works best. Future work will be to see how the scanner itself impacts which gate to use.</p>
+
+    <p><strong>We used CLM-8B off the shelf.</strong> Its authors report large gains from lightweight fine-tuning on downstream tasks [<a href="#ref5">5</a>], but we did not fine-tune it on security data. Its poor results here reflect the zero-shot model, not what a security-tuned CLM could do. A clear next step will be to fine-tune CLM.</p>
+
+    <h2 id="agent-speed">Keeping checks at agent speed</h2>
+    <p>As agents write and commit more of our code, every check on the commit path has to keep up. Gating lets the full scan spend its effort on the commits that need it, while the rest go through quickly. We're continuing to evaluate the automated checks in our pipeline as we increase our level of software autonomy, so subscribe to our blog for more.</p>
+
+    <h2 id="references">References</h2>
+    <ol class="refs">
+      <li id="ref1">J. Cable, D. Chiu, F. Pernice, S. Zhang, J. Anthony, T. Bas, G. Shen, C. Stosz and J. Steinhardt, "Early rogue AI agent activity and attempts to hack found on urlquery.net," Transluce, September 2026. <a href="https://transluce.org/agent-activity">transluce.org/agent-activity</a></li>
+      <li id="ref2">A. Fasano, M. Fleischer, C. McFaul, R. Xiao and T. Gallagher, "GLM-5.3 and the spread of advanced cyber capabilities," Anthropic, September 2026. <a href="https://www.anthropic.com/research">anthropic.com/research</a></li>
+      <li id="ref3">D. Kahneman, "Thinking, Fast and Slow," Farrar, Straus and Giroux, October 2011.</li>
+      <li id="ref4">TypeSafe AI, "Introducing System One Models &amp; Jev," September 2026. <a href="https://typesafe.ai">typesafe.ai</a></li>
+      <li id="ref5">J. Kwok, H. Kang, T. Suresh, J. Saad-Falcon, M. Pavone, C. Ré and A. Mirhoseini, "Contrastive Language Models: A System One Model for Fast and Generalizable Decision-Making," 2026. <a href="https://contrastive-lm.notion.site">contrastive-lm.notion.site</a></li>
+      <li id="ref6">OpenAI, "GPT-5.6: Frontier intelligence that scales with your ambition," July 2026. <a href="https://openai.com/index/gpt-5-6">openai.com/index/gpt-5-6</a></li>
+      <li id="ref7">Google, "Gemini 3.1 Flash-Lite: Built for intelligence at scale," March 2026. <a href="https://blog.google">blog.google</a></li>
+      <li id="ref8">OpenAI, "Introducing GPT-5.4 mini and nano," March 2026. <a href="https://openai.com/index/introducing-gpt-5-4-mini-and-nano">openai.com/index/introducing-gpt-5-4-mini-and-nano</a></li>
+    </ol>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">Max Hartman · San Francisco, California</div>
+</footer>
+</body>
+</html>
